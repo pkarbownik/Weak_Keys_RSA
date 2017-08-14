@@ -1,8 +1,10 @@
-#include "function_file.h"
+#include "GCD.h"
 
 
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include <openssl/bn.h>
+
 
 const int kBits = 1024;
 const int kExp = 3;
@@ -10,22 +12,28 @@ const int kExp = 3;
 
 int main(){
 
-	int keylen;
-	char *pem_key;
-	RSA *rsa = RSA_generate_key(kBits, kExp, 0, 0);
+    EVP_PKEY* pPubKey  = NULL;
+    FILE*     pemFile    = NULL;
 
-	/* To get the C-string PEM form: */
-	BIO *bio = BIO_new(BIO_s_mem());
-	PEM_write_bio_RSAPrivateKey(bio, rsa, NULL, NULL, 0, NULL, NULL);
 
-	keylen = BIO_pending(bio);
-	pem_key = calloc(keylen+1, 1); /* Null-terminate */
-	BIO_read(bio, pem_key, keylen);
+    if((pemFile = fopen("keys_and_messages/1.pem","rt")) && 
+       (pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL)))
+    {
+        fprintf(stderr,"Public key read.\n");
+    }
+    else
+    {
+        fprintf(stderr,"Cannot read \"public key\".\n");
 
-	printf("%s", pem_key);
+    }
 
-	BIO_free_all(bio);
-	RSA_free(rsa);
-	free(pem_key);
+	RSA* rsa = EVP_PKEY_get1_RSA(pPubKey);
+	//BN_print_fp(stdout, rsa->n);
+	printf("Public modulus:\n");
+	fprintf(stdout, "%s", BN_bn2dec(rsa->n));
+	printf("\n");
+	//function();
+
 }
+
 

@@ -26,7 +26,7 @@ LFLAGS = -L/openssl_built/lib
 LIBS = -lcrypto -lssl
 
 # define the C source files
-SRCS = main.c function_file.c
+SRCS = main.c GCD.c
 
 # define the C object files 
 #
@@ -39,7 +39,7 @@ SRCS = main.c function_file.c
 OBJS = $(SRCS:.c=.o)
 
 # define the executable file 
-MAIN = generatepem
+MAIN = GCD_finder
 
 #
 # The following part of the makefile is generic; it can be used to 
@@ -50,7 +50,7 @@ MAIN = generatepem
 .PHONY: depend clean
 
 all:    $(MAIN)
-	@echo  Simple compiler named mycc has been compiled
+	@echo  Program has been compiled
 
 $(MAIN): $(OBJS) 
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
