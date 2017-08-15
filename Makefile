@@ -1,72 +1,79 @@
-#
-# 'make depend' uses makedepend to automatically generate dependencies 
-#               (dependencies are added to end of Makefile)
-# 'make'        build executable file 'mycc'
-# 'make clean'  removes all .o and executable files
-#
 
-# define the C compiler to use
+# Debug build flags
+ifeq ($(dbg),1)
+      NVCCFLAGS += -g -G
+      TARGET := debug
+else
+      TARGET := release
+endif
+
+ALL_CCFLAGS :=
+ALL_CCFLAGS += $(NVCCFLAGS)
+ALL_CCFLAGS += $(EXTRA_NVCCFLAGS)
+ALL_CCFLAGS += $(addprefix -Xcompiler ,$(CCFLAGS))
+ALL_CCFLAGS += $(addprefix -Xcompiler ,$(EXTRA_CCFLAGS))
+
+ALL_LDFLAGS :=
+ALL_LDFLAGS += $(ALL_CCFLAGS)
+ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
+ALL_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
+
+
+# Gencode arguments
+ifeq ($(OS_ARCH),armv7l)
+SMS ?= 20 30 32 35 37 50
+else
+SMS ?= 11 20 30 35 37 50
+endif
+
+ifeq ($(SMS),)
+$(info >>> WARNING - no SM architectures have been specified - waiving sample <<<)
+SAMPLE_ENABLED := 0
+endif
+
+ifeq ($(GENCODE_FLAGS),)
+# Generate SASS code for each SM architecture listed in $(SMS)
+$(foreach sm,$(SMS),$(eval GENCODE_FLAGS += -gencode arch=compute_$(sm),code=sm_$(sm)))
+endif
+
+# Generate PTX code from the highest SM architecture in $(SMS) to guarantee forward-compatibility
+HIGHEST_SM := $(lastword $(sort $(SMS)))
+ifneq ($(HIGHEST_SM),)
+GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
+endif
+
 CC = nvcc
 
-# define any compile-time flags
-CFLAGS = #-Wall -g
-
-# define any directories containing header files other than /usr/include
-#
 INCLUDES = -Iopenssl_built/include
 
-# define library paths in addition to /usr/lib
-#   if I wanted to include libraries not in /usr/lib I'd specify
-#   their path using -Lpath, something like:
 LFLAGS = -L/openssl_built/lib
 
-# define any libraries to link into executable:
-#   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
-#   option, something like (this will link in libmylib.so and libm.so:
 LIBS = -lcrypto -lssl
 
-# define the C source files
 SRCS = main.cu GCD.cu
 
-# define the C object files 
-#
-# This uses Suffix Replacement within a macro:
-#   $(name:string1=string2)
-#         For each word in 'name' replace 'string1' with 'string2'
-# Below we are replacing the suffix .c of all words in the macro SRCS
-# with the .o suffix
-#
-OBJS = $(SRCS:.c=.o)
+OBJS = $(SRCS:.cu=.o)
 
-# define the executable file 
 MAIN = GCD_finder
 
-#
-# The following part of the makefile is generic; it can be used to 
-# build any executable just by changing the definitions above and by
-# deleting dependencies appended to the file from 'make depend'
-#
 
 .PHONY: depend clean
 
 all:    $(MAIN)
 	@echo  Program has been compiled
 
-$(MAIN): $(OBJS) 
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
+main.o: main.cu
+	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
-# this is a suffix replacement rule for building .o's from .c's
-# it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
-# (see the gnu make manual section about automatic variables)
-.c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+GCD.o: GCD.cu
+	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
+
+$(MAIN): main.o GCD.o
+	$(CC) $(NVCCFLAGS) $(INCLUDES) $(GENCODE_FLAGS) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
+
+run: build
+	./$(MAIN)
 
 clean:
 	$(RM) *.o *~ $(MAIN)
-
-depend: $(SRCS)
-	makedepend $(INCLUDES) $^
-
-# DO NOT DELETE THIS LINE -- make depend needs it
 
