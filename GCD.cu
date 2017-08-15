@@ -1,4 +1,4 @@
-#include "GCD.h"
+#include "GCD.cuh"
 
 void euclid_modulo(BIGNUM *r, const BIGNUM *a, const BIGNUM *b){
 	BN_CTX *ctx;

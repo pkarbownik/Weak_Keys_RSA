@@ -1,4 +1,4 @@
-#include "GCD.h"
+#include "GCD.cuh"
 
 
 int N  = 100;	

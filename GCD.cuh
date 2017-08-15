@@ -1,7 +1,6 @@
 #ifndef GCD_H
 #define GCD_H 
 
-#define _GNU_SOURCE 
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>

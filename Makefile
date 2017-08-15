@@ -6,10 +6,10 @@
 #
 
 # define the C compiler to use
-CC = gcc
+CC = nvcc
 
 # define any compile-time flags
-CFLAGS = -Wall -g
+CFLAGS = #-Wall -g
 
 # define any directories containing header files other than /usr/include
 #
@@ -26,7 +26,7 @@ LFLAGS = -L/openssl_built/lib
 LIBS = -lcrypto -lssl
 
 # define the C source files
-SRCS = main.c GCD.c
+SRCS = main.cu GCD.cu
 
 # define the C object files 
 #
