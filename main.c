@@ -35,7 +35,7 @@ void free_variables(){
 
 
 int main(){
-
+	clock_t start = clock();
 	for(i=1;i<=N;i++){
 		for(j=(i+1);j<=N;j++){
 			init_variables();
@@ -66,11 +66,14 @@ int main(){
 			euclid_modulo(GCD_result, first_modulus, second_modulus);
 			if(!BN_is_one(GCD_result)){
 				printf("%s and %s:\n", nr_first, nr_second);
-				fprintf(stdout, "GCD result:\n %s\n", BN_bn2dec(GCD_result));
+				fprintf(stdout, "GCD result:\n%s\n", BN_bn2dec(GCD_result));
 			}
-			
+
 			free_variables();
 		}
 	}
+	clock_t stop = clock();
+	double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
+	printf("Time elapsed in ms: %f\n", elapsed);
 }
 
