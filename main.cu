@@ -32,21 +32,15 @@ void free_variables(){
     fclose(pemFile_second);
 }
 
-/*__global__ void GCD(int n, float a, float *x, float *y){
-  int i = blockIdx.x*blockDim.x + threadIdx.x;
-  if (i < n) y[i] = a*x[i] + y[i];
-}*/
-
-
 
 __global__ void
-GCD(const float *A, const float *B, float *C, int numElements)
+vectorAdd(const float *A, const float *B, float *C, int numElements)
 {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (i < numElements)
     {
-        euclid_modulo(GCD_result, first_modulus, second_modulus);
+        C[i] = A[i] + B[i];
     }
 }
 
@@ -56,7 +50,7 @@ int main(void)
 {
 	// Error code to check return values for CUDA calls
     cudaError_t err = cudaSuccess;
-	int numElements = 50000;
+	int numElements = 5000;
 	size_t size = numElements * sizeof(float);
 	printf("[Vector addition of %d elements]\n", numElements);
 
@@ -136,7 +130,7 @@ int main(void)
     int threadsPerBlock = 512;
     int blocksPerGrid =(numElements + threadsPerBlock - 1) / threadsPerBlock;
     printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
-    GCD<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, numElements);
+	vectorAdd<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, numElements);
     err = cudaGetLastError();
 
     if (err != cudaSuccess)
