@@ -1,4 +1,5 @@
 #include "GCD.cuh"
+#include "cuda_runtime.h"
 
 int N  = 100;	
 EVP_PKEY* pPubKey_first  = NULL;
@@ -33,52 +34,110 @@ void free_variables(){
 }
 
 
-__global__ void
-vectorAdd(const float *A, const float *B, float *C, int numElements)
-{
-    int i = blockDim.x * blockIdx.x + threadIdx.x;
-
-    if (i < numElements)
-    {
-        C[i] = A[i] + B[i];
-    }
+// DEVICE FUNCTION TO COMPUTE GCD(a, b)
+__device__ unsigned int EEAGCD(unsigned int  a, unsigned int  b){
+	unsigned int  x, x1, y, y1, temp, quotient;
+	x = 0; x1 = 1; y = 1; y1 = 0;
+	while(b != 0){
+		temp = b;      
+		quotient = a / b;
+		b = a % b;   
+		a = temp; 
+		temp = x;
+		x = x1 - quotient * x; 
+		x1=temp; 
+		temp=y;
+		y = y1 - quotient * y; 
+		y1=temp;            
+	}
+	return a;	
 }
+// GCD KERNEL 
+__global__ void kernel(unsigned int *a, unsigned int *b, unsigned int *c, int N){
+	//blockSize is the size of shared memory
+	__shared__ unsigned int   aShared[512];  
+	__shared__ unsigned int   bShared[512];
+	int id = threadIdx.x + 512 * blockDim.x;
+	int tid = threadIdx.x;
 
+	if(id >= N ) {
+		return;
+	}
 
+	aShared[tid] = a[id];
+	bShared[tid] = b[id];
+	__syncthreads();
+	if(id > 0){
+		c[id] = EEAGCD(aShared[tid], bShared[tid]);
+	}
+}
 
 int main(void)
 {
+	cudaEvent_t start_cuda, stop_cuda;
+	cudaEventCreate(&start_cuda);
+	cudaEventCreate(&stop_cuda);
+	cudaEventRecord(start_cuda, 0);
 	// Error code to check return values for CUDA calls
     cudaError_t err = cudaSuccess;
 	int numElements = 5000;
-	size_t size = numElements * sizeof(float);
+	size_t size = numElements * sizeof(unsigned int );
 	printf("[Vector addition of %d elements]\n", numElements);
 
     // Allocate the host input vector A
-    float *h_A = (float *)malloc(size);
+    unsigned int   *A = (unsigned int   *)malloc(size);
 
     // Allocate the host input vector B
-    float *h_B = (float *)malloc(size);
+    unsigned int   *B = (unsigned int   *)malloc(size);
 
     // Allocate the host output vector C
-    float *h_C = (float *)malloc(size);
+    unsigned int   *C = (unsigned int   *)malloc(size);
 
     // Verify that allocations succeeded
-    if (h_A == NULL || h_B == NULL || h_C == NULL)
+    if (A == NULL || B == NULL || C == NULL)
     {
         fprintf(stderr, "Failed to allocate host vectors!\n");
         exit(EXIT_FAILURE);
     }
 
-    // Initialize the host input vectors
-    for (i = 0; i < numElements; ++i)
-    {
-        h_A[i] = rand()/(float)RAND_MAX;
-        h_B[i] = rand()/(float)RAND_MAX;
-    }
+
+	for(i=1;i<=N;i++){
+		for(j=(i+1);j<=N;j++){
+			init_variables();
+			asprintf(&nr_first, "keys_and_messages/%d.pem", i);
+			asprintf(&nr_second, "keys_and_messages/%d.pem", j);
+
+
+			if((pemFile_first = fopen(nr_first,"rt")) && (pPubKey_first = PEM_read_PUBKEY(pemFile_first,NULL,NULL,NULL))){
+		        //fprintf(stderr,"Public key read.\n");
+		    }
+		    else
+		    {
+		        fprintf(stderr,"Cannot read \"public key\".\n");
+
+		    }
+
+		    if((pemFile_second = fopen(nr_second,"rt")) && (pPubKey_second = PEM_read_PUBKEY(pemFile_second,NULL,NULL,NULL))){
+		        //fprintf(stderr,"Public key read.\n");
+		    } else {
+		        fprintf(stderr,"Cannot read \"public key\".\n");
+
+		    }
+
+			first_rsa = EVP_PKEY_get1_RSA(pPubKey_first);
+			second_rsa = EVP_PKEY_get1_RSA(pPubKey_second);
+			first_modulus = first_rsa->n;
+			second_modulus = second_rsa->n;
+			A[i] = atoi(BN_bn2dec(first_modulus));
+			B[i] = atoi(BN_bn2dec(second_modulus));
+
+			free_variables();
+		}
+	}
+
 
     // Allocate the device input vector A
-    float *d_A = NULL;
+    unsigned int  *d_A = NULL;
     err = cudaMalloc((void **)&d_A, size);
 
     if (err != cudaSuccess)
@@ -88,7 +147,7 @@ int main(void)
     }
 
     // Allocate the device input vector B
-    float *d_B = NULL;
+    unsigned int   *d_B = NULL;
     err = cudaMalloc((void **)&d_B, size);
 
     if (err != cudaSuccess)
@@ -98,7 +157,7 @@ int main(void)
     }
 
     // Allocate the device output vector C
-    float *d_C = NULL;
+    unsigned int   *d_C = NULL;
     err = cudaMalloc((void **)&d_C, size);
 
     if (err != cudaSuccess)
@@ -110,7 +169,7 @@ int main(void)
     // Copy the host input vectors A and B in host memory to the device input vectors in
     // device memory
     printf("Copy input data from the host memory to the CUDA device\n");
-    err = cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
     {
@@ -118,7 +177,7 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_B, B, size, cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
     {
@@ -130,7 +189,7 @@ int main(void)
     int threadsPerBlock = 512;
     int blocksPerGrid =(numElements + threadsPerBlock - 1) / threadsPerBlock;
     printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
-	vectorAdd<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, numElements);
+	kernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, numElements);
     err = cudaGetLastError();
 
     if (err != cudaSuccess)
@@ -142,7 +201,7 @@ int main(void)
     // Copy the device result vector in device memory to the host result vector
     // in host memory.
     printf("Copy output data from the CUDA device to the host memory\n");
-    err = cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
+    err = cudaMemcpy(C, d_C, size, cudaMemcpyDeviceToHost);
 
     if (err != cudaSuccess)
     {
@@ -151,15 +210,20 @@ int main(void)
     }
 
     // Verify that the result vector is correct
-    for (i = 0; i < numElements; ++i)
+    /*for (i = 0; i < numElements; ++i)
     {
-        if (fabs(h_A[i] + h_B[i] - h_C[i]) > 1e-5)
+        if (fabs(euclid_modulo(C[]) - C[i]) > 1e-5)
         {
             fprintf(stderr, "Result verification failed at element %d!\n", i);
             exit(EXIT_FAILURE);
         }
-    }
-
+    }*/
+	cudaEventSynchronize(stop_cuda);
+	float time;
+	cudaEventElapsedTime(&time, start_cuda, stop_cuda);
+	printf("Czas wykonania programu GPU: %f\n", time);
+	cudaEventDestroy(start_cuda);
+	cudaEventDestroy(stop_cuda);
     printf("Test PASSED\n");
 
     // Free device global memory
@@ -188,9 +252,9 @@ int main(void)
     }
 
     // Free host memory
-    free(h_A);
-    free(h_B);
-    free(h_C);
+    free(A);
+    free(B);
+    free(C);
 
     // Reset the device and exit
     // cudaDeviceReset causes the driver to clean up all state. While
