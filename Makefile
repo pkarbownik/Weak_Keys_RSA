@@ -1,3 +1,37 @@
+################################################################################
+#
+# Copyright 1993-2013 NVIDIA Corporation.  All rights reserved.
+#
+# NOTICE TO USER:
+#
+# This source code is subject to NVIDIA ownership rights under U.S. and
+# international Copyright laws.
+#
+# NVIDIA MAKES NO REPRESENTATION ABOUT THE SUITABILITY OF THIS SOURCE
+# CODE FOR ANY PURPOSE.  IT IS PROVIDED "AS IS" WITHOUT EXPRESS OR
+# IMPLIED WARRANTY OF ANY KIND.  NVIDIA DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOURCE CODE, INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE.
+# IN NO EVENT SHALL NVIDIA BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL,
+# OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+# OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
+# OR PERFORMANCE OF THIS SOURCE CODE.
+#
+# U.S. Government End Users.  This source code is a "commercial item" as
+# that term is defined at 48 C.F.R. 2.101 (OCT 1995), consisting  of
+# "commercial computer software" and "commercial computer software
+# documentation" as such terms are used in 48 C.F.R. 12.212 (SEPT 1995)
+# and is provided to the U.S. Government only as a commercial end item.
+# Consistent with 48 C.F.R.12.212 and 48 C.F.R. 227.7202-1 through
+# 227.7202-4 (JUNE 1995), all U.S. Government End Users acquire the
+# source code with only those rights set forth herein.
+#
+################################################################################
+#
+# Makefile project only supported on Mac OS X and Linux Platforms)
+#
+################################################################################
 
 # Debug build flags
 ifeq ($(dbg),1)
@@ -42,19 +76,21 @@ ifneq ($(HIGHEST_SM),)
 GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
 endif
 
-CC = nvcc
+GCC = g++
+
+CC = nvcc -ccbin $(GCC)
 
 INCLUDES = -Iopenssl_built/include
 
-LFLAGS = -L/openssl_built/lib
+LFLAGS = -Lopenssl_built/lib
 
 LIBS = -lcrypto -lssl
 
-SRCS = main.cu GCD.cu
+SRCS = main.cu
 
 OBJS = $(SRCS:.cu=.o)
 
-MAIN = GCD_finder
+MAIN = GCD_RSA
 
 
 .PHONY: depend clean
@@ -65,15 +101,18 @@ all:    $(MAIN)
 main.o: main.cu
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
-GCD.o: GCD.cu
+devices.o: devices.cu
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
-$(MAIN): main.o GCD.o
+devices.a:devices.o
+	$(CC) $(ALL_LDFLAGS) -lib -o $@ $<  $(LFLAGS) $(LIBS)
+
+$(MAIN): main.o
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(GENCODE_FLAGS) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 run: build
 	./$(MAIN)
 
 clean:
-	$(RM) *.o *~ $(MAIN)
+	$(RM) *.o *.a *~ $(MAIN)
 
