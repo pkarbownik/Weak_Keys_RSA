@@ -101,12 +101,6 @@ all:    $(MAIN)
 main.o: main.cu
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
-devices.o: devices.cu
-	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
-
-devices.a:devices.o
-	$(CC) $(ALL_LDFLAGS) -lib -o $@ $<  $(LFLAGS) $(LIBS)
-
 $(MAIN): main.o
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(GENCODE_FLAGS) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 

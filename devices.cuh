@@ -1,8 +1,10 @@
 #ifndef DEVICES_CUH
 #define DEVICES_CUH
 
-extern __device__ float multiplyByTwo(float number);
+__device__ inline float multiplyByTwo(float number){
+    return number * 2.0f;
+}
 
-extern __device__ float divideByTwo(float number);
+
 
 #endif /* DEVICES_CUH */
