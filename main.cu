@@ -1,5 +1,6 @@
-#include "cuda_bignum.h"
 #include "cuPrintf.cu"
+#include "test.h"
+#include "cuda_bignum.h"
 //#include <openssl/bn.h>
 //The macro CUPRINTF is defined for architectures
 //with different compute capabilities.
@@ -18,7 +19,7 @@ __global__ void testKernel(VQ_VECTOR *X, int N, unsigned *out){
     //cuPrintf("\n testKernel entrance by the global threadIdx= %d\n", i);
     cuPrintf("out: %lu\n", out[0]);
     for(int k=0; k<X[i].top; k++)
-        cuPrintf("testKernel entrance by the global threadIdx= %d value: %lu\n", i ,X[i].d[k]);
+        cuPrintf("testKernel entrance by the global threadIdx= %d value: %u\n", i ,X[i].d[k]);
     //cuPrintf("\n");
 }
 
@@ -29,6 +30,9 @@ __global__ void testKernel(VQ_VECTOR *X, int N, unsigned *out){
 
 
 int main(void){
+
+    unit_test();
+
     int L = 128, //.Data length
         N = 1;
 
@@ -47,10 +51,11 @@ int main(void){
 
         A[i] = a;
     }
-    printf("Sizeof unsigned: %d\n", sizeof(unsigned));
-    printf("Sizeof void*: %d\n", sizeof(void*));
-    cu_BN_dec2bn(&A[0], "4294967296");
+    printf("Sizeof unsigned: %lu\n", sizeof(unsigned));
+    printf("Sizeof void*: %lu\n", sizeof(void*));
+    cu_BN_dec2bn(&A[0], "18446744073709551617");
     L=A[0].top;
+
 
     //I Allocate and Copy data from A to device_VQ_VECTORon the GPU memory
 
@@ -65,7 +70,7 @@ int main(void){
 
         printf("\nA[%d]={", i);
         for(int j=0; j<L; j++)
-            printf("%lu ",A[i].d[j]);
+            printf("%u ",A[i].d[j]);
         printf("}\n");
 
 

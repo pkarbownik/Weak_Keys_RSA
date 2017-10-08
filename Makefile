@@ -76,7 +76,7 @@ ifneq ($(HIGHEST_SM),)
 GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
 endif
 
-GCC = g++
+GCC = gcc
 
 CC = nvcc -ccbin $(GCC)
 
@@ -86,7 +86,7 @@ LFLAGS = -Lopenssl_built/lib
 
 LIBS = -lcrypto -lssl
 
-SRCS = main.cu cuda_bignum.cu
+SRCS = main.cu cuda_bignum.cu test.cu
 
 OBJS = $(SRCS:.cu=.o)
 
@@ -104,7 +104,10 @@ main.o: main.cu
 cuda_bignum.o: cuda_bignum.cu
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
-$(MAIN): main.o cuda_bignum.o
+test.o: test.cu
+	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
+
+$(MAIN): main.o test.o cuda_bignum.o 
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(GENCODE_FLAGS) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 run: build

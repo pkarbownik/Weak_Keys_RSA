@@ -1,3 +1,6 @@
+#ifndef CUDA_BIGNUM_H
+#define CUDA_BIGNUM_H
+
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
@@ -43,10 +46,11 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 //# define CU_BN_DEC_NUM      19
 //# define CU_BN_DEC_CONV     (10000000000000000000UL)
 //# define CU_BN_MASK2l       (0xffffffffL)
-        
+
 /************************32bit version*********************/
 #define cu_BN_zero(a)      (cu_BN_set_word((a),0))
 #define CU_BN_is_zero(a)       ((a)->top == 0)
+#define CU_BN_BITS2        32
 #define CU_BN_BITS4        16
 #define CU_BN_MASK2        (0xffffffffL)
 #define CU_BN_MASK2l       (0xffff)
@@ -57,25 +61,17 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 #define CU_BN_DEC_FMT1     "%u"
 #define CU_BN_DEC_FMT2 "%09u"
 
-
-# define BN_UMULT_HIGH(a,b)   ({      \
-        register unsigned  ret,discard;  \
-        asm ("mulq      %3"             \
-             : "=a"(discard),"=d"(ret)  \
-             : "a"(a), "g"(b)           \
-             : "cc");                   \
-        ret;                  })            
+# define Lw(t)    (((unsigned)t)&CU_BN_MASK2)
+# define Hw(t)    (((t)>>CU_BN_BITS2)&CU_BN_MASK2)
 
 
-# define mul(r,a,w,c)    {               \
-        unsigned high,low,ret,ta=(a);   \
-        low =  (w) * ta;                \
-        high=  BN_UMULT_HIGH(w,ta);     \
-        ret =  low + (c);               \
-        (c) =  high;                    \
-        (c) += (ret<low)?1:0;           \
-        (r) =  ret;                     \
-        }
+#  define mul(r,a,w,c) { \
+        unsigned long t; \
+        t=((unsigned long)(w) * (a) + (c)); \
+        (r)= Lw(t); \
+        (c)= Hw(t); \
+        } 
+   
 
 //extern __global__ void testKernel(VQ_VECTOR *X, int N);
 
@@ -86,3 +82,6 @@ int cu_BN_set_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_mul_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_add_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a);
+unsigned  cu_bn_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
+
+#endif /* CUDA_BIGNUM_H */
