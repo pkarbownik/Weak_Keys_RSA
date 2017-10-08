@@ -7,18 +7,28 @@
 #include <ctype.h>
 #include "cuda_runtime.h"
 
+#define DEBUG 3
+
+#if defined(DEBUG) && DEBUG > 0
+ #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
+    __FILE__, __LINE__, __func__, ##args)
+#else
+ #define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
+#endif
+
 struct   __Q_VECTOR__{
-    unsigned long* d;       
+    unsigned* d;       
     int     top;    
 };
 
 typedef struct __Q_VECTOR__     VQ_VECTOR;
 
+#define debug(fmt, ...) printf("%s:%d: " fmt, __FILE__, __LINE__, __VA_ARGS__);
 
 
 # define cu_bn_correct_top(a) \
         { \
-        unsigned long *ftl; \
+        unsigned *ftl; \
         int tmp_top = (a)->top; \
         if (tmp_top > 0) \
                 { \
@@ -28,19 +38,28 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
                 } \
         }
 
-
-# define CU_BN_MASK2        (0xffffffffffffffffL)
-# define CU_BN_is_zero(a)       ((a)->top == 0)
-# define CU_BN_DEC_NUM      19
-# define CU_BN_DEC_CONV     (10000000000000000000UL)
-# define CU_BN_BITS2        64
-# define CU_BN_BITS4        32
-# define CU_BN_MASK2l       (0xffffffffL)
-# define cu_BN_zero(a)      (cu_BN_set_word((a),0))
+/************************64bit version*********************/
+//# define CU_BN_MASK2        (0xffffffffffffffffL)
+//# define CU_BN_DEC_NUM      19
+//# define CU_BN_DEC_CONV     (10000000000000000000UL)
+//# define CU_BN_MASK2l       (0xffffffffL)
+        
+/************************32bit version*********************/
+#define cu_BN_zero(a)      (cu_BN_set_word((a),0))
+#define CU_BN_is_zero(a)       ((a)->top == 0)
+#define CU_BN_BITS4        16
+#define CU_BN_MASK2        (0xffffffffL)
+#define CU_BN_MASK2l       (0xffff)
+#define CU_BN_MASK2h1      (0xffff8000L)
+#define CU_BN_MASK2h       (0xffff0000L)
+#define CU_BN_DEC_CONV     (1000000000L)
+#define CU_BN_DEC_NUM      9
+#define CU_BN_DEC_FMT1     "%u"
+#define CU_BN_DEC_FMT2 "%09u"
 
 
 # define BN_UMULT_HIGH(a,b)   ({      \
-        register unsigned long  ret,discard;  \
+        register unsigned  ret,discard;  \
         asm ("mulq      %3"             \
              : "=a"(discard),"=d"(ret)  \
              : "a"(a), "g"(b)           \
@@ -49,7 +68,7 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 
 
 # define mul(r,a,w,c)    {               \
-        unsigned long high,low,ret,ta=(a);   \
+        unsigned high,low,ret,ta=(a);   \
         low =  (w) * ta;                \
         high=  BN_UMULT_HIGH(w,ta);     \
         ret =  low + (c);               \
@@ -60,10 +79,10 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 
 //extern __global__ void testKernel(VQ_VECTOR *X, int N);
 
-//unsigned long bn_mul_add_words(unsigned long *rp, const unsigned long *ap, int num, unsigned long w);
+//unsigned bn_mul_add_words(unsigned *rp, const unsigned *ap, int num, unsigned w);
 VQ_VECTOR *cu_BN_new(void);
 void cu_BN_free(VQ_VECTOR *a);
-int cu_BN_set_word(VQ_VECTOR *a, unsigned long w);
-int cu_BN_mul_word(VQ_VECTOR *a, unsigned long w);
-int cu_BN_add_word(VQ_VECTOR *a, unsigned long w);
+int cu_BN_set_word(VQ_VECTOR *a, unsigned w);
+int cu_BN_mul_word(VQ_VECTOR *a, unsigned w);
+int cu_BN_add_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a);

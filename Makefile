@@ -86,7 +86,7 @@ LFLAGS = -Lopenssl_built/lib
 
 LIBS = -lcrypto -lssl
 
-SRCS = main.cu
+SRCS = main.cu cuda_bignum.cu
 
 OBJS = $(SRCS:.cu=.o)
 
@@ -101,7 +101,10 @@ all:    $(MAIN)
 main.o: main.cu
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
-$(MAIN): main.o
+cuda_bignum.o: cuda_bignum.cu
+	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
+
+$(MAIN): main.o cuda_bignum.o
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(GENCODE_FLAGS) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 run: build
