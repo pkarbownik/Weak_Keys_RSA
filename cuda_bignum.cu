@@ -27,7 +27,7 @@ int cu_BN_set_word(VQ_VECTOR *a, unsigned w)
     return (1);
 }
 
-unsigned cu_bn_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w)
+unsigned cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w)
 {
     unsigned  c1 = 0;
     assert(num >= 0);
@@ -46,13 +46,11 @@ int cu_BN_mul_word(VQ_VECTOR *a, unsigned w)
 {
     unsigned ll;
     w &= CU_BN_MASK2;
-    DEBUG_PRINT("w is equal: %u\n", w);
     if (a->top) {
         if (w == 0)
             cu_BN_zero(a);
         else {
-            ll = cu_bn_mul_words(a->d, a->d, a->top, w);
-            DEBUG_PRINT("cu_bn_mul_words result: %u\n", ll);
+            ll = cu_BN_mul_words(a->d, a->d, a->top, w);
             if (ll) {
                 a->d[a->top++] = ll;
             }
@@ -78,12 +76,10 @@ int cu_BN_add_word(VQ_VECTOR *a, unsigned w)
     for (i = 0; w != 0 && i < a->top; i++) {
         a->d[i] = l = (a->d[i] + w) & CU_BN_MASK2;
         w = (w > l) ? 1 : 0;
-        DEBUG_PRINT("a[%u]: %u\n", i, a->d[i]);
     }
     if (w && i == a->top) {
         a->top++;
         a->d[i] = w;
-        DEBUG_PRINT("on top a[%u]: %u\n", i, a->d[i]);
     }
     return (1);
 }
@@ -111,10 +107,6 @@ int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a)
     if (bn == NULL)
         return (num);
 
-    /*
-     * a is the start of the digits, and it is 'i' long. We chop it into
-     * BN_DEC_NUM digits at a time
-     */
     if (bn == NULL) {
         if ((ret = cu_BN_new()) == NULL)
             return (0);
@@ -122,8 +114,6 @@ int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a)
         ret = bn;
         cu_BN_zero(ret);
     }
-
-    DEBUG_PRINT("number of digits: %d\n", i);
     j = CU_BN_DEC_NUM - (i % CU_BN_DEC_NUM);
     if (j == CU_BN_DEC_NUM)
         j = 0;
@@ -131,22 +121,16 @@ int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a)
     while (--i >= 0) {
         l *= 10;
         l += *a - '0';
-        DEBUG_PRINT("working at digit: %u j: %u\n", *a - '0', j);
         a++;
         if (++j == CU_BN_DEC_NUM) {
-            DEBUG_PRINT("max less than INTMAX: %u\n", l);
             cu_BN_mul_word(ret, CU_BN_DEC_CONV);
             cu_BN_add_word(ret, l);
-            DEBUG_PRINT("BN[0]: %u\n", ret->d[0]);
-            DEBUG_PRINT("BN[1]: %u\n", ret->d[1]);
             l = 0;
             j = 0;
-            DEBUG_PRINT("1: top of ret is equal: %d\n", ret->top);
         }
     }
 
     cu_bn_correct_top(ret);
     bn = ret;
-    /* Don't set the negative flag if it's zero. */
     return (num);
 }

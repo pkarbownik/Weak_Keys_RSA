@@ -82,6 +82,6 @@ int cu_BN_set_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_mul_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_add_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a);
-unsigned  cu_bn_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
+unsigned  cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
 
 #endif /* CUDA_BIGNUM_H */

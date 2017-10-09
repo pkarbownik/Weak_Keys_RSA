@@ -17,6 +17,8 @@ void unit_test(void);
 void mul_test(void);
 void Hw_test();
 void Lw_test();
-void cu_bn_mul_words_test(void);
+void cu_BN_mul_words_test(void);
+void cu_BN_mul_word_test(void);
+void cu_BN_add_word_test(void);
 
 #endif /* TEST_H */

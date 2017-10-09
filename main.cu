@@ -16,11 +16,8 @@
 
 __global__ void testKernel(VQ_VECTOR *X, int N, unsigned *out){
     int i= blockIdx.x*blockDim.x + threadIdx.x;
-    //cuPrintf("\n testKernel entrance by the global threadIdx= %d\n", i);
-    cuPrintf("out: %lu\n", out[0]);
     for(int k=0; k<X[i].top; k++)
         cuPrintf("testKernel entrance by the global threadIdx= %d value: %u\n", i ,X[i].d[k]);
-    //cuPrintf("\n");
 }
 
 
@@ -34,7 +31,7 @@ int main(void){
     unit_test();
 
     int L = 128, //.Data length
-        N = 1;
+        N = 3;
 
     VQ_VECTOR   *A,
                 *device_VQ_VECTOR;
@@ -51,13 +48,14 @@ int main(void){
 
         A[i] = a;
     }
-    printf("Sizeof unsigned: %lu\n", sizeof(unsigned));
-    printf("Sizeof void*: %lu\n", sizeof(void*));
-    cu_BN_dec2bn(&A[0], "18446744073709551617");
+
+    for (int i=0;i<N;i++){
+        cu_BN_dec2bn(&A[i], "1844657685765856876897785764336478689676456476786468976475687647658767864576475744073709551617");
+    }
     L=A[0].top;
 
 
-    //I Allocate and Copy data from A to device_VQ_VECTORon the GPU memory
+    //Allocate and Copy data from A to device_VQ_VECTORon the GPU memory
 
     cudaDeviceReset();
     cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR, N*sizeof(VQ_VECTOR));    
@@ -109,12 +107,6 @@ int main(void){
         fprintf(stderr, "\n testKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return 1;
     }
-/*  for(int i=0; i<2; i++){
-        printf("\nA[%d]={", i);
-        for(int j=0; j<L; j++)
-            printf("%.3f",A[i].Data[j]);
-        printf("}\n");
-    }*/
     cudaFree(device_VQ_VECTOR);
 
     // don't forget to free A and all its Data
