@@ -134,3 +134,51 @@ int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a)
     bn = ret;
     return (num);
 }
+
+/* Must 'OPENSSL_free' the returned data */
+char *BN_bn2hex(const VQ_VECTOR *a)
+{
+    int i, j, v, z = 0;
+    char *buf;
+    char *p;
+    if (BN_is_zero(a))
+        return "0";
+    buf = (char *)malloc(a->top * CU_BN_BYTES * 2 + 2);
+    assert(buf != NULL);
+    p = buf;
+    for (i = a->top - 1; i >= 0; i--) {
+        for (j = CU_BN_BITS2 - 8; j >= 0; j -= 8) {
+            /* strip leading zeros */
+            v = ((unsigned)(a->d[i] >> j)) & 0xff;
+            DEBUG_PRINT("when i is: %u and j is: %u v is equal: %u\n", i, j, v);
+            if (z || (v != 0)) {
+                *(p++) = Hex[v >> 4];
+                DEBUG_PRINT("when i is: %u and j is: %u p high is equal: %u\n", i, j, p);
+                *(p++) = Hex[v & 0x0f];
+                DEBUG_PRINT("when i is: %u and j is: %u p low is equal: %u\n", i, j, p);
+                z = 1;
+            }
+        }
+    }
+    *p = '\0';
+    return (buf);
+}
+
+int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b)
+{
+    int i;
+    unsigned t1, t2, *ap, *bp;
+
+    i = a->top - b->top;
+    if (i != 0)
+        return (i);
+    ap = a->d;
+    bp = b->d;
+    for (i = a->top - 1; i >= 0; i--) {
+        t1 = ap[i];
+        t2 = bp[i];
+        if (t1 != t2)
+            return ((t1 > t2) ? 1 : -1);
+    }
+    return (0);
+}

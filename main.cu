@@ -16,8 +16,8 @@
 
 __global__ void testKernel(VQ_VECTOR *X, int N, unsigned *out){
     int i= blockIdx.x*blockDim.x + threadIdx.x;
-    for(int k=0; k<X[i].top; k++)
-        cuPrintf("testKernel entrance by the global threadIdx= %d value: %u\n", i ,X[i].d[k]);
+    /*for(int k=0; k<X[i].top; k++)
+        cuPrintf("testKernel entrance by the global threadIdx= %d value: %u\n", i ,X[i].d[k]);*/
 }
 
 
@@ -50,7 +50,7 @@ int main(void){
     }
 
     for (int i=0;i<N;i++){
-        cu_BN_dec2bn(&A[i], "1844657685765856876897785764336478689676456476786468976475687647658767864576475744073709551617");
+        cu_BN_dec2bn(&A[i], "1844657685765856823456789023456789336478689676456476786468976475687647658767864576475744073709551617");
     }
     L=A[0].top;
 
@@ -66,13 +66,11 @@ int main(void){
          * working around it with proxy variable */
     	    //Prinf of all the elements of A
 
-        printf("\nA[%d]={", i);
+        /*printf("\nA[%d]={", i);
         for(int j=0; j<L; j++)
             printf("%u ",A[i].d[j]);
         printf("}\n");
-
-
-    	printf("\n\n");
+    	printf("\n\n");*/
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, A[i].d, L*sizeof(unsigned),
                 cudaMemcpyHostToDevice);

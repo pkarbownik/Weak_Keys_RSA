@@ -8,6 +8,9 @@ void unit_test(void){
 	cu_BN_mul_words_test();
 	cu_BN_mul_word_test();
 	cu_BN_add_word_test();
+	cu_BN_dec2bn_test();
+	BN_bn2hex_test();
+	cu_BN_ucmp_test();
 	INFO("test stop\n");
 }
 
@@ -72,7 +75,6 @@ void cu_BN_mul_word_test(void){
 	}
 }
 
-
 void cu_BN_add_word_test(void){
 	unsigned i;
 	VQ_VECTOR   *A = NULL;
@@ -82,7 +84,7 @@ void cu_BN_add_word_test(void){
 	A->top=size;
 	A->d = ((unsigned*)malloc(size*sizeof(unsigned)));
 	A->d[0] = 4294967295;
-	A->d[1] = 429496725;
+	A->d[1] = 4;
 	INFO("cu_BN_add_word returns: %u\n", cu_BN_add_word(A, w));
 	INFO("size: %u\n", size);
 	INFO("w: %u\n", w);
@@ -90,4 +92,81 @@ void cu_BN_add_word_test(void){
 	for(i=0; i<A->top; i++){
 		INFO("A->d[%u]: %u\n", i, A->d[i]);
 	}
+}
+
+
+void cu_BN_dec2bn_test(void){
+	unsigned i;
+	VQ_VECTOR   *A = NULL;
+	A =   (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
+	unsigned size =2;
+	char *a = "340282366920938463463374607431768211456"; //2^128
+	A->top=size;
+	A->d = ((unsigned*)malloc(size*sizeof(unsigned)));
+	A->d[0] = 429496725;
+	A->d[1] = 415346545;
+	INFO("cu_BN_dec2bn returns: %u\n", cu_BN_dec2bn(A, a));
+	INFO("size: %u\n", size);
+	INFO("a: %s\n", a);
+	INFO("A->top: %u\n", A->top);
+	for(i=0; i<A->top; i++){
+		INFO("A->d[%u]: %u\n", i, A->d[i]);
+	}
+}
+
+void BN_bn2hex_test(void)
+{
+	unsigned i;
+	VQ_VECTOR   *A = NULL;
+	A =   (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
+	unsigned size =2;
+	char *a = "1848764767645778789"; //2^32
+	char *b;
+	A->top=size;
+	A->d = ((unsigned*)malloc(size*sizeof(unsigned)));
+	A->d[0] = 17;
+	A->d[1] = 45646;
+	INFO("cu_BN_dec2bn returns: %u\n", cu_BN_dec2bn(A, a));
+	INFO("size: %u\n", size);
+	INFO("a: %s\n", a);
+	INFO("A->top: %u\n", A->top);
+	for(i=0; i<A->top; i++){
+		INFO("A->d[%u]: %u\n", i, A->d[i]);
+	}
+	INFO("b: %s\n", BN_bn2hex(A));
+}
+
+void cu_BN_ucmp_test(void)
+{
+	unsigned i;
+	VQ_VECTOR   *A = NULL, *B = NULL;
+	A =   (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
+	B =   (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
+	unsigned size =2;
+	char *a = "1848764767645778787"; //2^32
+	char *b = "1848764767645778788";
+	A->top=size;
+	A->d = ((unsigned*)malloc(size*sizeof(unsigned)));
+	A->d[0] = 17;
+	A->d[1] = 45646;
+	B->top=size;
+	B->d = ((unsigned*)malloc(size*sizeof(unsigned)));
+	B->d[0] = 17;
+	B->d[1] = 45646;
+	INFO("cu_BN_dec2bn for A returns: %u\n", cu_BN_dec2bn(A, a));
+	INFO("cu_BN_dec2bn for B returns: %u\n", cu_BN_dec2bn(B, b));
+	INFO("size: %u\n", size);
+	INFO("a: %s\n", a);
+	INFO("b: %s\n", b);
+	INFO("A->top: %u\n", A->top);
+	INFO("B->top: %u\n", B->top);
+	INFO("cu_BN_ucmp: %d\n", cu_BN_ucmp(A, B));
+	for(i=0; i<A->top; i++){
+		INFO("A->d[%u]: %u\n", i, A->d[i]);
+	}
+	for(i=0; i<B->top; i++){
+		INFO("B->d[%u]: %u\n", i, B->d[i]);
+	}
+	INFO("a: %s\n", BN_bn2hex(A));
+	INFO("b: %s\n", BN_bn2hex(B));
 }

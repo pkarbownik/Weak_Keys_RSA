@@ -10,7 +10,7 @@
 #include <ctype.h>
 #include "cuda_runtime.h"
 
-#define DEBUG 3
+#define DEBUG 0
 
 #if defined(DEBUG) && DEBUG > 0
  #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
@@ -52,6 +52,7 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 #define CU_BN_is_zero(a)       ((a)->top == 0)
 #define CU_BN_BITS2        32
 #define CU_BN_BITS4        16
+#define CU_BN_BYTES        8
 #define CU_BN_MASK2        (0xffffffffL)
 #define CU_BN_MASK2l       (0xffff)
 #define CU_BN_MASK2h1      (0xffff8000L)
@@ -71,7 +72,8 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
         (r)= Lw(t); \
         (c)= Hw(t); \
         } 
-   
+
+static const char Hex[] = "0123456789ABCDEF";
 
 //extern __global__ void testKernel(VQ_VECTOR *X, int N);
 
@@ -83,5 +85,6 @@ int cu_BN_mul_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_add_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a);
 unsigned  cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
-
+char *BN_bn2hex(const VQ_VECTOR *a);
+int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b);
 #endif /* CUDA_BIGNUM_H */
