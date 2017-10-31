@@ -78,13 +78,23 @@ static const char Hex[] = "0123456789ABCDEF";
 //extern __global__ void testKernel(VQ_VECTOR *X, int N);
 
 //unsigned bn_mul_add_words(unsigned *rp, const unsigned *ap, int num, unsigned w);
+char *strrev(char *str);
 VQ_VECTOR *cu_BN_new(void);
 void cu_BN_free(VQ_VECTOR *a);
 int cu_BN_set_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_mul_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_add_word(VQ_VECTOR *a, unsigned w);
-int cu_BN_dec2bn(VQ_VECTOR *bn, const char *a);
+VQ_VECTOR *cu_BN_dec2bn(const char *a);
 unsigned  cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
-char *BN_bn2hex(const VQ_VECTOR *a);
+char *cu_bn_bn2hex(const VQ_VECTOR *a);
 int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b);
+long cu_long_abs(long number);
+int cu_bn_usub(VQ_VECTOR *r, const VQ_VECTOR *a, const VQ_VECTOR *b);
+int cu_bn_num_bits_word(long l);
+int cu_bn_num_bits(const VQ_VECTOR *a);
+unsigned number_of_digits(long number);
+char *long2string(long number);
+char *string_num_add(const char *a, const char *b);
+char *string_num_add_long(const char *a, long b);
+int cu_bn_copy(VQ_VECTOR *a, const  VQ_VECTOR *b);
 #endif /* CUDA_BIGNUM_H */
