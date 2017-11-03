@@ -196,11 +196,15 @@ long cu_long_abs(long number){
 }
 
 /* unsigned subtraction of b from a, a must be larger than b. */
-int cu_bn_usub(VQ_VECTOR *r, const VQ_VECTOR *a, const VQ_VECTOR *b)
+VQ_VECTOR *cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b)
 {
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
     int i, carry;
+    VQ_VECTOR *r = NULL;
+    r = cu_BN_new();
+    r->top=0;
+    r->d = ((unsigned*)malloc(sizeof(unsigned)));
 
     max = a->top;
     min = b->top;
@@ -271,7 +275,7 @@ int cu_bn_usub(VQ_VECTOR *r, const VQ_VECTOR *a, const VQ_VECTOR *b)
 
     r->top = max;
     cu_bn_correct_top(r);
-    return (1);
+    return r;
 }
 
 int cu_bn_num_bits_word(long l)
@@ -405,7 +409,7 @@ char *string_num_add_long(const char *a, long word){
     return string_num_add(a, long2string(word));
 }
 
-int cu_bn_copy(VQ_VECTOR *a, const  VQ_VECTOR *b){
+/*int cu_bn_copy(VQ_VECTOR *a, const  VQ_VECTOR *b){
     a = (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
     a->top = b->top;
     int i;
@@ -414,4 +418,128 @@ int cu_bn_copy(VQ_VECTOR *a, const  VQ_VECTOR *b){
         a->d[i]=b->d[i];
     }
     return 1;
+}*/
+
+
+VQ_VECTOR *cu_BN_rshift1(const VQ_VECTOR *a)
+{
+    unsigned *ap, *rp, t, c;
+    int i, j;
+    VQ_VECTOR *r = NULL;
+    r = cu_BN_new();
+    r->top=0;
+    r->d = ((unsigned*)malloc(sizeof(unsigned)));
+
+    cu_BN_zero(r);
+    if (CU_BN_is_zero(a)) 
+        return r;
+    i = a->top;
+    ap = a->d;
+    j = i - (ap[i - 1] == 1);
+    rp = r->d;
+    t = ap[--i];
+    c = (t & 1) ? CU_BN_TBIT : 0;
+    if (t >>= 1)
+        rp[i] = t;
+    while (i > 0) {
+        t = ap[--i];
+        rp[i] = ((t >> 1) & CU_BN_MASK2) | c;
+        c = (t & 1) ? CU_BN_TBIT : 0;
+    }
+    r->top = j;
+    return r;
+}
+
+VQ_VECTOR *cu_BN_lshift(const VQ_VECTOR *a, int n)
+{
+    int i, nw, lb, rb;
+    unsigned *t, *f;
+    unsigned l;
+    VQ_VECTOR *r = NULL;
+    r = cu_BN_new();
+    r->top=0;
+    r->d = ((unsigned*)malloc(sizeof(unsigned)));
+
+    if (n < 0) {
+        return 0;
+    }
+
+    nw = n / CU_BN_BITS2;
+    lb = n % CU_BN_BITS2;
+    rb = CU_BN_BITS2 - lb;
+    f = a->d;
+    t = r->d;
+    t[a->top + nw] = 0;
+    if (lb == 0)
+        for (i = a->top - 1; i >= 0; i--)
+            t[nw + i] = f[i];
+    else
+        for (i = a->top - 1; i >= 0; i--) {
+            l = f[i];
+            t[nw + i + 1] |= (l >> rb) & CU_BN_MASK2;
+            t[nw + i] = (l << lb) & CU_BN_MASK2;
+        }
+    memset(t, 0, nw * sizeof(t[0]));
+
+    r->top = a->top + nw + 1;
+    return r;
+}
+
+VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b)
+{
+    VQ_VECTOR *t = NULL;
+    unsigned shifts = 0;
+    while (!CU_BN_is_zero(b)) {
+        if (cu_BN_is_odd(a)) {
+            if (cu_BN_is_odd(b)) {
+                DEBUG_PRINT("b id odd, a is equal: %s\n", cu_bn_bn2hex(a));
+                a = cu_bn_usub(a, b);
+                DEBUG_PRINT("b id odd, a-b is equal: %s\n", cu_bn_bn2hex(a));
+                a = cu_BN_rshift1(a);
+                DEBUG_PRINT("b id odd, a-b>>1 is equal: %s\n", cu_bn_bn2hex(a));
+                if (cu_BN_ucmp(a, b) < 0) {
+                    t = a;
+                    a = b;
+                    b = t;
+                }
+            } else {            /* a odd - b even */
+                DEBUG_PRINT("b id even, b is equal: %s\n", cu_bn_bn2hex(b));
+                b = cu_BN_rshift1(b);
+                DEBUG_PRINT("b id even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
+                if (cu_BN_ucmp(a, b) < 0) {
+                    t = a;
+                    a = b;
+                    b = t;
+                }
+            }
+        } else {                /* a is even */
+            if (cu_BN_is_odd(b)) {
+                DEBUG_PRINT("a id even, b is odd, a is equal: %s\n", cu_bn_bn2hex(a));
+                a = cu_BN_rshift1(a);
+                DEBUG_PRINT("a id even, b is odd, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
+                if (cu_BN_ucmp(a, b) < 0) {
+                    t = a;
+                    a = b;
+                    b = t;
+                }
+            } else {            /* a even - b even */
+                DEBUG_PRINT("a id even, b is even, a is equal: %s\n", cu_bn_bn2hex(a));
+                DEBUG_PRINT("a id even, b is even, b is equal: %s\n", cu_bn_bn2hex(b));
+                a = cu_BN_rshift1(a);
+                DEBUG_PRINT("a id even, b is even, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
+                b = cu_BN_rshift1(b);
+                DEBUG_PRINT("a id even, b is even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
+                shifts++;
+            }
+        }
+        /* 0 <= b <= a */
+    }
+
+    if (shifts) {
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
+        DEBUG_PRINT("shifts is equal: %u\n", shifts);
+        a=cu_BN_lshift(a, shifts);
+        DEBUG_PRINT("a<<shifts is equal: %s\n", cu_bn_bn2hex(a));
+    }
+    return (a);
 }

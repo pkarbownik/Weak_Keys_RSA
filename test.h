@@ -35,4 +35,7 @@ void number_of_digits_test(void);
 void long2string_test(void);
 void string_num_add_long_test(void);
 void cu_bn_copy_test(void);
+void cu_BN_rshift1_test(void);
+void cu_BN_lshift_test(void);
+void cu_euclid_test(void);
 #endif /* TEST_H */

@@ -20,7 +20,9 @@ void unit_test(void){
 	number_of_digits_test();
 	long2string_test();
 	string_num_add_long_test();
-	//cu_bn_copy_test();
+	cu_BN_rshift1_test();
+	cu_BN_lshift_test();
+	cu_euclid_test();
 	INFO("test stop\n");
 }
 
@@ -180,7 +182,7 @@ void cu_bn_usub_test(void)
 	C->d = ((unsigned*)malloc(size*sizeof(unsigned)));
 	A = cu_BN_dec2bn(a);
 	B = cu_BN_dec2bn(b);
-	INFO("cu_bn_usub %u\n", cu_bn_usub(C, A, B));
+	C = cu_bn_usub(A, B);
 	INFO("size: %u\n", size);
 	INFO("a: %s\n", a);
 	INFO("b: %s\n", b);
@@ -207,21 +209,6 @@ void cu_bn_num_bits_test(void)
 	INFO("A->top: %u\n", A->top);
 	INFO("cu_bn_num_bits: %d\n", cu_bn_num_bits(A));
 } 
-/*
-void cu_bn_bn2dec_test(void)
-{
-	unsigned size =2;
-	VQ_VECTOR   *A = NULL;
-	A =   (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
-	char *a = "1848764763497967886363755645778788"; //2^32
-	A->top=size;
-	A->d = ((unsigned*)malloc(size*sizeof(unsigned)));
-	INFO("cu_BN_dec2bn for A returns: %u\n", cu_BN_dec2bn(A, a));
-	INFO("size: %u\n", size);
-	INFO("a: %s\n", a);
-	INFO("A->top: %u\n", A->top);
-	INFO("cu_bn_bn2dec: %s\n", cu_bn_bn2dec(A));
-} */
 
 void string_num_add_test(void)
 {
@@ -254,12 +241,40 @@ void string_num_add_long_test(void)
 	INFO("a+b: %s\n", string_num_add_long(a, b));
 }
 
-void cu_bn_copy_test(void){
+void cu_BN_rshift1_test(void){
+	unsigned i;
+	VQ_VECTOR   *A = NULL;
+	char *a = "6646832653468956348568346856346";
+	A = cu_BN_dec2bn(a);
+	A = cu_BN_rshift1(A);
+	INFO("a: %s\n", a);
+	for(i=0; i<A->top; i++){
+		INFO("A->d[%u]: %u\n", i, A->d[i]);
+	}
+	INFO("result a=%s rshift1: %s\n", a, cu_bn_bn2hex(A));
+}
 
-	char *b = "3755644353453443634634638788";
-	VQ_VECTOR  *B = NULL;
-	B = (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
+void cu_BN_lshift_test(void){
+	unsigned i;
+	VQ_VECTOR   *A = NULL;
+	char *a = "6646832653468956348568346856346";
+	A = cu_BN_dec2bn(a);
+	A = cu_BN_lshift(A, 4);
+	INFO("a: %s\n", a);
+	for(i=0; i<A->top; i++){
+		INFO("A->d[%u]: %u\n", i, A->d[i]);
+	}
+	INFO("result a=%s lshift (A,4): %s\n", a, cu_bn_bn2hex(A));
+}
+
+void cu_euclid_test(void){
+	VQ_VECTOR   *A = NULL, *B = NULL;
+	char *a = "211319228244187486513184688950596901432020552950859782";
+	char *b = "37724566494969212902300091545866760828606124226";
+	A = cu_BN_dec2bn(a);
+	INFO("a: %s\n", a);
 	B = cu_BN_dec2bn(b);
-	//cu_bn_copy(A, B);
-	//INFO("A: %s\n", cu_bn_bn2hex(A));
+	INFO("b: %s\n", b);
+	A = cu_euclid(A, B);
+	INFO("15417B103640DD7A2752917A=%s\n", cu_bn_bn2hex(A));
 }

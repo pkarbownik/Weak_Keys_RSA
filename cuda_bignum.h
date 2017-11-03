@@ -10,7 +10,7 @@
 #include <ctype.h>
 #include "cuda_runtime.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if defined(DEBUG) && DEBUG > 0
  #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
@@ -49,6 +49,7 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 
 /************************32bit version*********************/
 #define cu_BN_zero(a)      (cu_BN_set_word((a),0))
+#define cu_BN_is_odd(a)        (((a)->top > 0) && ((a)->d[0] & 1))
 #define CU_BN_is_zero(a)       ((a)->top == 0)
 #define CU_BN_BITS2        32
 #define CU_BN_BITS4        16
@@ -60,7 +61,8 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 #define CU_BN_DEC_CONV     (1000000000L)
 #define CU_BN_DEC_NUM      9
 #define CU_BN_DEC_FMT1     "%u"
-#define CU_BN_DEC_FMT2 "%09u"
+#define CU_BN_DEC_FMT2		"%09u"
+#define CU_BN_TBIT         (0x80000000L)
 
 # define Lw(t)    (((unsigned)t)&CU_BN_MASK2)
 # define Hw(t)    (((t)>>CU_BN_BITS2)&CU_BN_MASK2)
@@ -89,7 +91,7 @@ unsigned  cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned 
 char *cu_bn_bn2hex(const VQ_VECTOR *a);
 int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b);
 long cu_long_abs(long number);
-int cu_bn_usub(VQ_VECTOR *r, const VQ_VECTOR *a, const VQ_VECTOR *b);
+VQ_VECTOR *cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b);
 int cu_bn_num_bits_word(long l);
 int cu_bn_num_bits(const VQ_VECTOR *a);
 unsigned number_of_digits(long number);
@@ -97,4 +99,7 @@ char *long2string(long number);
 char *string_num_add(const char *a, const char *b);
 char *string_num_add_long(const char *a, long b);
 int cu_bn_copy(VQ_VECTOR *a, const  VQ_VECTOR *b);
+VQ_VECTOR *cu_BN_rshift1(const VQ_VECTOR *a);
+VQ_VECTOR *cu_BN_lshift(const VQ_VECTOR *a, int n);
+VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b);
 #endif /* CUDA_BIGNUM_H */
