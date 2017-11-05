@@ -8,30 +8,30 @@ void unit_test(void){
 	mul_test();
 	cu_BN_mul_words_test();
 	cu_BN_mul_word_test();
-	cu_BN_add_word_test();
-	cu_BN_dec2bn_test();
-	BN_bn2hex_test();
-	cu_BN_ucmp_test();
-	cu_long_abs_test();
-	cu_bn_usub_test();
-	cu_bn_num_bits_word_test();
-	cu_bn_num_bits_test();
-	string_num_add_test();
-	number_of_digits_test();
-	long2string_test();
-	string_num_add_long_test();
-	cu_BN_rshift1_test();
-	cu_BN_lshift_test();
-	cu_euclid_test();
+	cu_BN_set_word_test();
+	//cu_BN_add_word_test();
+	//cu_BN_dec2bn_test();
+	//BN_bn2hex_test();
+	//cu_BN_ucmp_test();
+	//cu_long_abs_test();
+	//cu_bn_usub_test();
+	//cu_bn_num_bits_word_test();
+	//cu_bn_num_bits_test();
+	//string_num_add_test();
+	//number_of_digits_test();
+	//long2string_test();
+	//string_num_add_long_test();
+	//cu_BN_rshift1_test();
+	//cu_BN_lshift_test();
+	//cu_euclid_test();
 	INFO("test stop\n");
 }
 
 void cu_BN_new_test(void){
 	VQ_VECTOR *bn = NULL;
 	bn = cu_BN_new();
-	bn -> top = 2;
+	bn -> top = 1;
 	INFO("bn -> top: %u\n", bn -> top);
-	bn -> d = (unsigned *) malloc(sizeof(unsigned) * bn -> top);
 	cu_BN_free(bn);
 }
 
@@ -49,9 +49,9 @@ void mul_test(void){
 }
 
 void Hw_test(void){
-	long t;
+	unsigned t;
 	t=Hw(42949672988);
-	INFO("t: %lu\n", t);
+	INFO("t: %u\n", t);
 
 }
 
@@ -62,17 +62,17 @@ void Lw_test(void){
 }
 
 void cu_BN_mul_words_test(void){
-	unsigned w = 429496725;
-	unsigned i, num = 3;
-	unsigned *ap = ((unsigned*)malloc(num*sizeof(unsigned)));
+	unsigned w = 429496725, i;
+	unsigned *ap = ((unsigned*)malloc(2*sizeof(unsigned)));
+	unsigned *rp = ((unsigned*)malloc(3*sizeof(unsigned)));
 	ap[0]=429496725;
 	ap[1]=429496725;
-	unsigned *rp = ((unsigned*)malloc(num*sizeof(unsigned)));
-	INFO("cu_BN_mul_words returns: %u\n", cu_BN_mul_words(rp, ap, num, w));
-	INFO("num: %u\n", num);
+	INFO("cu_BN_mul_words returns: %u\n", cu_BN_mul_words(rp, ap, 3, w));
 	INFO("w: %u\n", w);
-	for(i=0; i<num; i++){
+	for(i=0; i<2; i++){
 		INFO("ap[%u]: %u\n", i, ap[i]);
+	}
+	for(i=0; i<3; i++){
 		INFO("rp[%u]: %u\n", i, rp[i]);
 	}
 }
@@ -86,21 +86,36 @@ void cu_BN_mul_word_test(void){
 	A->top=size;
 	A->d = ((unsigned*)malloc(size*sizeof(unsigned)));
 	A->d[0] = 429496725;
-	A->d[1] = 429496725;
-	INFO("cu_BN_mul_word returns: %u\n", cu_BN_mul_word(A, w));
-	INFO("size: %u\n", size);
-	INFO("w: %u\n", w);
-	INFO("A->top: %u\n", A->top);
-	assert(unsigned(429496725*429496725) == A->d[0]);
-	for(i=0; i<A->top; i++){
-		INFO("A->d[%u]: %u\n", i, A->d[i]);
-	}
+	A->d[1] = 0;
+	assert(1==cu_BN_mul_word(A, w));
+	assert(Lw(429496725L*429496725) == A->d[0]);
+	assert(Hw(429496725L*429496725) == A->d[1]);
+	INFO("Test passed\n");
+	cu_BN_free(A);
 }
 
+void cu_BN_set_word_test(void){
+	
+	unsigned i;
+	VQ_VECTOR   *A = NULL;
+	A = cu_BN_new();
+	unsigned size =2;
+	unsigned w = 429496725;
+	A->top=size;
+	A->d = ((unsigned*)malloc(size*sizeof(unsigned)));
+	A->d[0] = 1;
+	A->d[1] = 1;
+	assert(1==cu_BN_set_word(A, w));
+	assert(w == A->d[0]);
+	assert(1 == A->d[1]);
+	assert(1 == A->top);
+	INFO("Test passed\n");
+	cu_BN_free(A);
+}
 void cu_BN_add_word_test(void){
 	unsigned i;
 	VQ_VECTOR   *A = NULL;
-	A =   (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
+	A = cu_BN_new();
 	unsigned size =2;
 	unsigned w = 4294967295;
 	A->top=size;
@@ -108,12 +123,7 @@ void cu_BN_add_word_test(void){
 	A->d[0] = 4294967295;
 	A->d[1] = 4;
 	INFO("cu_BN_add_word returns: %u\n", cu_BN_add_word(A, w));
-	INFO("size: %u\n", size);
-	INFO("w: %u\n", w);
-	INFO("A->top: %u\n", A->top);
-	for(i=0; i<A->top; i++){
-		INFO("A->d[%u]: %u\n", i, A->d[i]);
-	}
+	cu_BN_free(A);
 }
 
 
@@ -244,27 +254,27 @@ void string_num_add_long_test(void)
 void cu_BN_rshift1_test(void){
 	unsigned i;
 	VQ_VECTOR   *A = NULL;
-	char *a = "6646832653468956348568346856346";
+	char *a = "664683265346895634856568568568678867688687565685686785858585857857857857576676345865647588346856346";
 	A = cu_BN_dec2bn(a);
 	A = cu_BN_rshift1(A);
 	INFO("a: %s\n", a);
-	for(i=0; i<A->top; i++){
-		INFO("A->d[%u]: %u\n", i, A->d[i]);
-	}
-	INFO("result a=%s rshift1: %s\n", a, cu_bn_bn2hex(A));
+	//for(i=0; i<A->top; i++){
+	//	INFO("A->d[%u]: %u\n", i, A->d[i]);
+	//}
+	//INFO("result a=%s rshift1: %s\n", a, cu_bn_bn2hex(A));
 }
 
 void cu_BN_lshift_test(void){
 	unsigned i;
 	VQ_VECTOR   *A = NULL;
-	char *a = "6646832653468956348568346856346";
+	char *a = "6646832653468945893465834685634657834685683467856347563465862347623974563475723562340956348568346856346";
 	A = cu_BN_dec2bn(a);
 	A = cu_BN_lshift(A, 4);
 	INFO("a: %s\n", a);
-	for(i=0; i<A->top; i++){
-		INFO("A->d[%u]: %u\n", i, A->d[i]);
-	}
-	INFO("result a=%s lshift (A,4): %s\n", a, cu_bn_bn2hex(A));
+	//for(i=0; i<A->top; i++){
+	//	INFO("A->d[%u]: %u\n", i, A->d[i]);
+	//}
+	//INFO("result a=%s lshift (A,4): %s\n", a, cu_bn_bn2hex(A));
 }
 
 void cu_euclid_test(void){

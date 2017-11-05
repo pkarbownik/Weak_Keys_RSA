@@ -19,53 +19,46 @@ char *strrev(char *str)
       return str;
 }
 
-
 VQ_VECTOR *cu_BN_new(void)
 {
     VQ_VECTOR *ret = NULL;
     ret =  (VQ_VECTOR*)malloc(sizeof(VQ_VECTOR));
     ret->top = 0;
-    ret->d = NULL;
+    ret->d = (unsigned *) malloc(sizeof(unsigned));
     return (ret);
 }
 
 void cu_BN_free(VQ_VECTOR *a)
 {
-    if (a == NULL)
-        return;
-    a->d = NULL;
-}
-
-int cu_BN_set_word(VQ_VECTOR *a, unsigned w)
-{
-    a->d[0] = w;
-    a->top = (w ? 1 : 0);
-    return (1);
+    free(a);
 }
 
 unsigned cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w)
 {
     unsigned  c1 = 0;
-    assert(num >= 0);
     if (num <= 0)
-        return (c1);
+        return 0;
     DEBUG_PRINT("num: %u\n", num);
     while (num) {
         mul(rp[0], ap[0], w, c1);
-        DEBUG_PRINT("rp[0]: %u\n", rp[0]);
         ap++;
         rp++;
         num--;
     }
+    DEBUG_PRINT("c1: %u\n", c1);
     return (c1);
 }
 
 int cu_BN_mul_word(VQ_VECTOR *a, unsigned w)
 {
     unsigned ll;
+    if(NULL == a)
+        return 0;
+
+    if(NULL == a->d)
+        return 0;
+
     w &= CU_BN_MASK2;
-    DEBUG_PRINT("w: %u\n", w);
-    DEBUG_PRINT("a->top: %u\n", a->top);
     if (a->top) {
         if (w == 0)
             cu_BN_zero(a);
@@ -76,6 +69,13 @@ int cu_BN_mul_word(VQ_VECTOR *a, unsigned w)
             }
         }
     }
+    return (1);
+}
+
+int cu_BN_set_word(VQ_VECTOR *a, unsigned w)
+{
+    a->d[0] = w;
+    a->top = (w ? 1 : 0);
     return (1);
 }
 
@@ -93,7 +93,7 @@ int cu_BN_add_word(VQ_VECTOR *a, unsigned w)
     if (CU_BN_is_zero(a))
         return cu_BN_set_word(a, w);
 
-    for (i = 0; w != 0 && i < a->top; i++) {
+    for (i = 0; i < a->top; i++) {
         a->d[i] = l = (a->d[i] + w) & CU_BN_MASK2;
         w = (w > l) ? 1 : 0;
     }

@@ -65,7 +65,7 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 #define CU_BN_TBIT         (0x80000000L)
 
 # define Lw(t)    (((unsigned)t)&CU_BN_MASK2)
-# define Hw(t)    (((t)>>CU_BN_BITS2)&CU_BN_MASK2)
+# define Hw(t)    ((unsigned)((t)>>CU_BN_BITS2)&CU_BN_MASK2)
 
 
 #  define mul(r,a,w,c) { \

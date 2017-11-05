@@ -21,6 +21,7 @@ void Hw_test();
 void Lw_test();
 void cu_BN_mul_words_test(void);
 void cu_BN_mul_word_test(void);
+void cu_BN_set_word_test(void);
 void cu_BN_add_word_test(void);
 void cu_BN_dec2bn_test(void);
 void BN_bn2hex_test(void);
