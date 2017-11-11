@@ -10,7 +10,7 @@
 #include <ctype.h>
 #include "cuda_runtime.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if defined(DEBUG) && DEBUG > 0
  #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
@@ -51,6 +51,7 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 #define cu_BN_zero(a)      (cu_BN_set_word((a),0))
 #define cu_BN_is_odd(a)        (((a)->top > 0) && ((a)->d[0] & 1))
 #define CU_BN_is_zero(a)       ((a)->top == 0)
+#define cu_BN_is_initialized() 
 #define CU_BN_BITS2        32
 #define CU_BN_BITS4        16
 #define CU_BN_BYTES        8
@@ -64,16 +65,8 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 #define CU_BN_DEC_FMT2		"%09u"
 #define CU_BN_TBIT         (0x80000000L)
 
-# define Lw(t)    (((unsigned)t)&CU_BN_MASK2)
-# define Hw(t)    ((unsigned)((t)>>CU_BN_BITS2)&CU_BN_MASK2)
-
-
-#  define mul(r,a,w,c) { \
-        unsigned long t; \
-        t=((unsigned long)(w) * (a) + (c)); \
-        (r)= Lw(t); \
-        (c)= Hw(t); \
-        } 
+#define Lw(t)    (((unsigned)t))
+#define Hw(t)    ((unsigned)((t)>>CU_BN_BITS2))
 
 static const char Hex[] = "0123456789ABCDEF";
 
@@ -81,17 +74,17 @@ static const char Hex[] = "0123456789ABCDEF";
 
 //unsigned bn_mul_add_words(unsigned *rp, const unsigned *ap, int num, unsigned w);
 char *strrev(char *str);
-VQ_VECTOR *cu_BN_new(void);
+VQ_VECTOR *cu_BN_new();
 void cu_BN_free(VQ_VECTOR *a);
 int cu_BN_set_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_mul_word(VQ_VECTOR *a, unsigned w);
 int cu_BN_add_word(VQ_VECTOR *a, unsigned w);
-VQ_VECTOR *cu_BN_dec2bn(const char *a);
+int cu_BN_dec2bn(VQ_VECTOR * ret, const char *a);
 unsigned  cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
 char *cu_bn_bn2hex(const VQ_VECTOR *a);
 int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b);
 long cu_long_abs(long number);
-VQ_VECTOR *cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b);
+int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *c);
 int cu_bn_num_bits_word(long l);
 int cu_bn_num_bits(const VQ_VECTOR *a);
 unsigned number_of_digits(long number);
@@ -99,7 +92,7 @@ char *long2string(long number);
 char *string_num_add(const char *a, const char *b);
 char *string_num_add_long(const char *a, long b);
 int cu_bn_copy(VQ_VECTOR *a, const  VQ_VECTOR *b);
-VQ_VECTOR *cu_BN_rshift1(const VQ_VECTOR *a);
-VQ_VECTOR *cu_BN_lshift(const VQ_VECTOR *a, int n);
+int cu_BN_rshift1(VQ_VECTOR *a);
+int cu_BN_lshift(VQ_VECTOR *a, unsigned n);
 VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b);
 #endif /* CUDA_BIGNUM_H */

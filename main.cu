@@ -15,7 +15,7 @@
 
 
 __global__ void testKernel(VQ_VECTOR *X, int N, unsigned *out){
-    int i= blockIdx.x*blockDim.x + threadIdx.x;
+    //int i= blockIdx.x*blockDim.x + threadIdx.x;
     /*for(int k=0; k<X[i].top; k++)
         cuPrintf("testKernel entrance by the global threadIdx= %d value: %u\n", i ,X[i].d[k]);*/
 }
