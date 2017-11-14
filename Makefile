@@ -76,7 +76,7 @@ ifneq ($(HIGHEST_SM),)
 GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
 endif
 
-GCC = gcc
+GCC = gcc 
 
 CC = nvcc -ccbin $(GCC)
 

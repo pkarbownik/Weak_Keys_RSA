@@ -61,6 +61,19 @@ unsigned cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  
 
 }
 
+/*__device__ void * cu_realloc(void * old_p, unsigned new_s)
+{
+    void* new_p = (void*) malloc (new_s);
+    unsigned old_s = sizeof(old_p);
+    if(old_s <= new_s){
+        memcpy(old_p, new_p, old_s);
+    } else {
+        memcpy(old_p, new_p, new_s);
+    }
+    free(old_p);
+    return (new_p);
+}*/
+
 int cu_BN_mul_word(VQ_VECTOR *a, unsigned w){
 
     unsigned ll;
@@ -221,8 +234,8 @@ char *cu_bn_bn2hex(const VQ_VECTOR *a){
     return (p);
 
 }
-
-int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
+/*
+__device__ int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -242,17 +255,17 @@ int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
 
 }
 
-long cu_long_abs(long number){
+__device__ long cu_long_abs(long number){
 
     if(number<0)
         return -number;
     else
         return number;
 
-}
+}*/
 
 /* unsigned subtraction of b from a, a must be larger than b. */
-int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
+/*__device__ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
 
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
@@ -295,10 +308,10 @@ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
     bp += min;
     rp += min;
 #endif
-    if (carry) {                /* subtracted */
-        if (!dif)
+    if (carry) {    */            /* subtracted */
+     /*   if (!dif)*/
             /* error: a < b */
-            return 0;
+         /*   return 0;
         while (dif) {
             dif--;
             t1 = *(ap++);
@@ -335,11 +348,11 @@ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
     cu_bn_correct_top(r);
     return (1);
 
-}
+}*/
 
 int cu_bn_num_bits_word(long l){
 
-     static const unsigned char bits[256] = {
+     unsigned char bits[256] = {
         0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
@@ -478,8 +491,8 @@ char *string_num_add_long(const char *a, long word){
 
 }
 
-
-int cu_BN_rshift1(VQ_VECTOR *a){
+/*
+__device__ int cu_BN_rshift1(VQ_VECTOR *a){
 
     if(NULL == a)
         return 0;
@@ -522,7 +535,7 @@ int cu_BN_rshift1(VQ_VECTOR *a){
 
 }
 
-int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
+__device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
     if(NULL == a)
         return 0;
@@ -555,9 +568,10 @@ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
     }
 
     if(nw || nwb){
-        a->d = (unsigned*)realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
-        memset((a->d+a->top), 0, (nw + nwb)*sizeof(unsigned));
-        memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
+        return 0;
+        //a->d = (unsigned*)cu_realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
+        //memset((a->d+a->top), 0, (nw + nwb)*sizeof(unsigned));
+        //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
 
     if (lb == 0 && nw != 0 ){
@@ -581,7 +595,7 @@ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
 }
 
-VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
+__device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
 
     VQ_VECTOR *t = NULL;
     unsigned shifts = 0;
@@ -598,7 +612,7 @@ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
                     a = b;
                     b = t;
                 }
-            } else {            /* a odd - b even */
+            } else {   
                 DEBUG_PRINT("b id even, b is equal: %s\n", cu_bn_bn2hex(b));
                 cu_BN_rshift1(b);
                 DEBUG_PRINT("b id even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
@@ -608,7 +622,7 @@ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
                     b = t;
                 }
             }
-        } else {                /* a is even */
+        } else {   
             if (cu_BN_is_odd(b)) {
                 DEBUG_PRINT("a id even, b is odd, a is equal: %s\n", cu_bn_bn2hex(a));
                 cu_BN_rshift1(a);
@@ -618,7 +632,7 @@ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
                     a = b;
                     b = t;
                 }
-            } else {            /* a even - b even */
+            } else {     
                 DEBUG_PRINT("a id even, b is even, a is equal: %s\n", cu_bn_bn2hex(a));
                 DEBUG_PRINT("a id even, b is even, b is equal: %s\n", cu_bn_bn2hex(b));
                 cu_BN_rshift1(a);
@@ -628,7 +642,6 @@ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
                 shifts++;
             }
         }
-        /* 0 <= b <= a */
     }
 
     if (shifts) {
@@ -637,7 +650,7 @@ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
         cu_BN_lshift(a, shifts);
         DEBUG_PRINT("a<<shifts is equal: %s\n", cu_bn_bn2hex(a));
     }
-    cu_BN_free(t);
+    //cu_BN_free(t);
     return (a);
 
-}
+}*/
