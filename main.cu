@@ -295,11 +295,17 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
 
 }
 
-__global__ void testKernel(VQ_VECTOR *X, int N){
+__global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
     int i= blockIdx.x * blockDim.x + threadIdx.x;
     //int p;
     //for(int k=0; k<N; k++)
-    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , X[i].d[0]);
+    VQ_VECTOR *TMP;
+
+    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , A[i].d[0]);
+    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , B[i].d[0]);
+    cu_bn_usub(&A[i], &B[i], &C[i]);
+    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
+    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , C[i].d[0]);
     //p = cu_bn_usub(dev_A[i], dev_B[i], dev_C[i]);
     //cuPrintf("testKernel: %d\n", p);
 }
@@ -308,87 +314,124 @@ int main(void){
     int L = 128, //.Data length
         N = 1;
 
-    VQ_VECTOR   *A,
-                *device_VQ_VECTOR;
+    VQ_VECTOR   *A;
+    VQ_VECTOR   *device_VQ_VECTOR_A;
+    VQ_VECTOR   *B;
+    VQ_VECTOR   *device_VQ_VECTOR_B;
+    VQ_VECTOR   *C;
+    VQ_VECTOR   *device_VQ_VECTOR_C;
 
     cudaError_t cudaStatus;
 
     A =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
+    B =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
+    C =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
+
     for(int i=0; i<N; i++){
         VQ_VECTOR a;
-        a.d = (unsigned*)malloc(L*sizeof(unsigned));;
+        VQ_VECTOR b;
+        VQ_VECTOR c;
+        a.d = (unsigned*)malloc(L*sizeof(unsigned));
+        b.d = (unsigned*)malloc(L*sizeof(unsigned));
+        c.d = (unsigned*)malloc(L*sizeof(unsigned));
         a.top =   L;
+        b.top =   L;
+        c.top =   L;
+
         for(int j=0; j<L; j++)
             a.d[j]=0;
 
+        for(int j=0; j<L; j++)
+            b.d[j]=0;
+
+        for(int j=0; j<L; j++)
+            c.d[j]=0;
+
         A[i] = a;
+        B[i] = b;
+        C[i] = c;
     }
 
-    cu_BN_dec2bn(&A[0], "437768685634765");
+    cu_BN_dec2bn(&A[0], "37358654342800865389770");
+    cu_BN_dec2bn(&B[0], "34121356110372842586730");
+    cu_BN_dec2bn(&C[0], "437768685634765");
     L=A[0].top;
+    L=B[0].top;
+    L=C[0].top;
     //Prinf of all the elements of A
-    for(int i=0; i<N; i++){
+    /*for(int i=0; i<N; i++){
         printf("\nA[%d]={", i);
         for(int j=0; j<L; j++)
             printf("%u ",A[i].d[j]);
         printf("}\n");
     }
-
-    printf("\n\n");
+    printf("\n\n");*/
     //I Allocate and Copy data from A to device_VQ_VECTORon the GPU memory
 
     cudaDeviceReset();
-    cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR, N*sizeof(VQ_VECTOR));    
-    cudaStatus = cudaMemcpy(device_VQ_VECTOR, A, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR_A, N*sizeof(VQ_VECTOR));    
+    cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR_B, N*sizeof(VQ_VECTOR));
+    cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR_C, N*sizeof(VQ_VECTOR));
+    cudaStatus = cudaMemcpy(device_VQ_VECTOR_A, A, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(device_VQ_VECTOR_B, B, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(device_VQ_VECTOR_C, C, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
 
     for(int i = 0; i != N; ++i) {
-        /* can't access device_VQ_VECTOR[i].d directly from host-side,
-         * working around it with proxy variable */
         unsigned long *out;
         cudaMalloc(&out, L*sizeof(unsigned));
-        cudaMemcpy(out, A[i].d, L*sizeof(unsigned),
-                cudaMemcpyHostToDevice);
-        cudaMemcpy(&device_VQ_VECTOR[i].d, &out, sizeof(void*),
-                cudaMemcpyHostToDevice);
+        cudaMemcpy(out, A[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
+        cudaMemcpy(&device_VQ_VECTOR_A[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
+
+        cudaMalloc(&out, L*sizeof(unsigned));
+        cudaMemcpy(out, B[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
+        cudaMemcpy(&device_VQ_VECTOR_B[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
+
+        cudaMalloc(&out, L*sizeof(unsigned));
+        cudaMemcpy(out, C[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
+        cudaMemcpy(&device_VQ_VECTOR_C[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
 
         // will re-allocate later, for simplicity sake
         free(A[i].d);
+        free(B[i].d);
+        free(C[i].d);
     }
 
     cudaPrintfInit();
-    testKernel<<<1,N>>>(device_VQ_VECTOR, N);//to test and see on a sigle thread
+    testKernel<<<1,N>>>(device_VQ_VECTOR_A, device_VQ_VECTOR_B, device_VQ_VECTOR_C, N);//to test and see on a sigle thread
     cudaPrintfDisplay(stdout, true);
     cudaPrintfEnd();
+
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "\n testKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return 1;
     }
-    cudaStatus = cudaMemcpy(A, device_VQ_VECTOR, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
+
+    cudaStatus = cudaMemcpy(A, device_VQ_VECTOR_A, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(B, device_VQ_VECTOR_B, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(C, device_VQ_VECTOR_C, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
+
+
     for(int i = 0; i != N; ++i) {
-        // allocate array, copy data
         unsigned *array = (unsigned*)malloc(L*sizeof(unsigned));
-        cudaMemcpy(array, A[i].d, L*sizeof(unsigned),
-                cudaMemcpyDeviceToHost);
-
-        // assign new array to A[i]
+        cudaMemcpy(array, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         A[i].d = array;
+
+        cudaMemcpy(array, B[i].d, L*sizeof(unsigned),
+        cudaMemcpyDeviceToHost);
+        B[i].d = array;
+
+        cudaMemcpy(array, C[i].d, L*sizeof(unsigned),
+        cudaMemcpyDeviceToHost);
+        C[i].d = array;
     }
+
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "\n testKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return 1;
     }
-/*  for(int i=0; i<2; i++){
-        printf("\nA[%d]={", i);
-        for(int j=0; j<L; j++)
-            printf("%.3f",A[i].Data[j]);
-        printf("}\n");
-    }*/
-    cudaFree(device_VQ_VECTOR);
 
-    // don't forget to free A and all its Data
-
+    cudaFree(device_VQ_VECTOR_A);
     return 0;
-
 }
