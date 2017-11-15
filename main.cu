@@ -243,20 +243,15 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
     while (!CU_BN_is_zero(b)) {
         if (cu_BN_is_odd(a)) {
             if (cu_BN_is_odd(b)) {
-                DEBUG_PRINT("b id odd, a is equal: %s\n", cu_bn_bn2hex(a));
                 cu_bn_usub(a, b, a);
-                DEBUG_PRINT("b id odd, a-b is equal: %s\n", cu_bn_bn2hex(a));
                 cu_BN_rshift1(a);
-                DEBUG_PRINT("b id odd, a-b>>1 is equal: %s\n", cu_bn_bn2hex(a));
                 if (cu_BN_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {      
-                DEBUG_PRINT("b id even, b is equal: %s\n", cu_bn_bn2hex(b));
                 cu_BN_rshift1(b);
-                DEBUG_PRINT("b id even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
                 if (cu_BN_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
@@ -265,21 +260,15 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
             }
         } else {              
             if (cu_BN_is_odd(b)) {
-                DEBUG_PRINT("a id even, b is odd, a is equal: %s\n", cu_bn_bn2hex(a));
                 cu_BN_rshift1(a);
-                DEBUG_PRINT("a id even, b is odd, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
                 if (cu_BN_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {       
-                DEBUG_PRINT("a id even, b is even, a is equal: %s\n", cu_bn_bn2hex(a));
-                DEBUG_PRINT("a id even, b is even, b is equal: %s\n", cu_bn_bn2hex(b));
                 cu_BN_rshift1(a);
-                DEBUG_PRINT("a id even, b is even, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
                 cu_BN_rshift1(b);
-                DEBUG_PRINT("a id even, b is even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
                 shifts++;
             }
         }
@@ -287,10 +276,7 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
     }
 
     if (shifts) {
-        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
-        DEBUG_PRINT("shifts is equal: %u\n", shifts);
         cu_BN_lshift(a, shifts);
-        DEBUG_PRINT("a<<shifts is equal: %s\n", cu_bn_bn2hex(a));
     }
     return (a);
 
@@ -300,13 +286,15 @@ __global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
     int i= blockIdx.x * blockDim.x + threadIdx.x;
     //int p;
     //for(int k=0; k<N; k++)
-    //VQ_VECTOR *TMP;
+    VQ_VECTOR *TMP;
 
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , A[i].d[0]);
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , B[i].d[0]);
     //cu_bn_usub(&A[i], &B[i], &C[i]);
-    cu_BN_lshift(&C[i], 4);
+    //cu_BN_lshift(&C[i], 4);
+    TMP = cu_euclid(&A[i], &B[i]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
+    C[0] = *TMP;
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , C[i].d[0]);
     //p = cu_bn_usub(dev_A[i], dev_B[i], dev_C[i]);
     //cuPrintf("testKernel: %d\n", p);
@@ -354,8 +342,8 @@ int main(void){
         C[i] = c;
     }
 
-    cu_BN_dec2bn(&A[0], "37358654342800865389770");
-    cu_BN_dec2bn(&B[0], "34121356110372842586730");
+    cu_BN_dec2bn(&A[0], "1053354540224");
+    cu_BN_dec2bn(&B[0], "14823829824");
     cu_BN_dec2bn(&C[0], "437768685634765");
     L=A[0].top;
     L=B[0].top;
