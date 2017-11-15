@@ -208,7 +208,9 @@ __device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
     if(nw || nwb){
         return 0;
-        //a->d = (unsigned*)cu_realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
+        // cant't use host function realloc in device function 
+
+        //a->d = (unsigned*)realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
         //memset((a->d+a->top), 0, (nw + nwb)*sizeof(unsigned));
         //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
@@ -290,7 +292,6 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
         cu_BN_lshift(a, shifts);
         DEBUG_PRINT("a<<shifts is equal: %s\n", cu_bn_bn2hex(a));
     }
-    //cu_BN_free(t);
     return (a);
 
 }
@@ -299,11 +300,12 @@ __global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
     int i= blockIdx.x * blockDim.x + threadIdx.x;
     //int p;
     //for(int k=0; k<N; k++)
-    VQ_VECTOR *TMP;
+    //VQ_VECTOR *TMP;
 
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , A[i].d[0]);
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , B[i].d[0]);
-    cu_bn_usub(&A[i], &B[i], &C[i]);
+    //cu_bn_usub(&A[i], &B[i], &C[i]);
+    cu_BN_lshift(&C[i], 4);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , C[i].d[0]);
     //p = cu_bn_usub(dev_A[i], dev_B[i], dev_C[i]);
@@ -417,12 +419,10 @@ int main(void){
         cudaMemcpy(array, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         A[i].d = array;
 
-        cudaMemcpy(array, B[i].d, L*sizeof(unsigned),
-        cudaMemcpyDeviceToHost);
+        cudaMemcpy(array, B[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         B[i].d = array;
 
-        cudaMemcpy(array, C[i].d, L*sizeof(unsigned),
-        cudaMemcpyDeviceToHost);
+        cudaMemcpy(array, C[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         C[i].d = array;
     }
 
