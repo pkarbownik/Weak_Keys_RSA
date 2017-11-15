@@ -433,5 +433,7 @@ int main(void){
     }
 
     cudaFree(device_VQ_VECTOR_A);
+    cudaFree(device_VQ_VECTOR_B);
+    cudaFree(device_VQ_VECTOR_C);
     return 0;
 }
