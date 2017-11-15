@@ -1,5 +1,5 @@
 #include "cuPrintf.cu"
-//#include "test.h"
+#include "test.h"
 #include "cuda_bignum.h"
 //#include <openssl/bn.h>
 //The macro CUPRINTF is defined for architectures
@@ -16,7 +16,7 @@
 #endif
 
 
-__device__ int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
+__device__ int cu_dev_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -36,7 +36,7 @@ __device__ int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
 
 }
 
-__device__ long cu_long_abs(long number){
+__device__ long cu_dev_long_abs(long number){
 
     if(number<0)
         return -number;
@@ -45,7 +45,7 @@ __device__ long cu_long_abs(long number){
 
 }
 
-__device__ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
+__device__ int cu_dev_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
 
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
@@ -59,7 +59,7 @@ __device__ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
 
     max = a->top;
     min = b->top;
-    dif = cu_long_abs(max - min);
+    dif = cu_dev_long_abs(max - min);
 
     ap = a->d;
     bp = b->d;
@@ -131,7 +131,7 @@ __device__ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
 }
 
 
-__device__ int cu_BN_rshift1(VQ_VECTOR *a){
+__device__ int cu_dev_bn_rshift1(VQ_VECTOR *a){
 
     if(NULL == a)
         return 0;
@@ -174,7 +174,7 @@ __device__ int cu_BN_rshift1(VQ_VECTOR *a){
 
 }
 
-__device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
+__device__ int cu_dev_bn_lshift(VQ_VECTOR *a, unsigned n){
 
     if(NULL == a)
         return 0;
@@ -236,23 +236,23 @@ __device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
 }
 
-__device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
+__device__ VQ_VECTOR *cu_dev_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
 
     VQ_VECTOR *t = NULL;
     unsigned shifts = 0;
     while (!CU_BN_is_zero(b)) {
         if (cu_BN_is_odd(a)) {
             if (cu_BN_is_odd(b)) {
-                cu_bn_usub(a, b, a);
-                cu_BN_rshift1(a);
-                if (cu_BN_ucmp(a, b) < 0) {
+                cu_dev_bn_usub(a, b, a);
+                cu_dev_bn_rshift1(a);
+                if (cu_dev_BN_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {      
-                cu_BN_rshift1(b);
-                if (cu_BN_ucmp(a, b) < 0) {
+                cu_dev_bn_rshift1(b);
+                if (cu_dev_BN_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
@@ -260,15 +260,15 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
             }
         } else {              
             if (cu_BN_is_odd(b)) {
-                cu_BN_rshift1(a);
-                if (cu_BN_ucmp(a, b) < 0) {
+                cu_dev_bn_rshift1(a);
+                if (cu_dev_BN_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {       
-                cu_BN_rshift1(a);
-                cu_BN_rshift1(b);
+                cu_dev_bn_rshift1(a);
+                cu_dev_bn_rshift1(b);
                 shifts++;
             }
         }
@@ -276,7 +276,7 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
     }
 
     if (shifts) {
-        cu_BN_lshift(a, shifts);
+        cu_dev_bn_lshift(a, shifts);
     }
     return (a);
 
@@ -290,19 +290,21 @@ __global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
 
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , A[i].d[0]);
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , B[i].d[0]);
-    //cu_bn_usub(&A[i], &B[i], &C[i]);
-    //cu_BN_lshift(&C[i], 4);
-    TMP = cu_euclid(&A[i], &B[i]);
+    //cu_dev_bn_usub(&A[i], &B[i], &C[i]);
+    //cu_dev_bn_lshift(&C[i], 4);
+    TMP = cu_dev_euclid(&A[i], &B[i]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
     C[0] = *TMP;
     CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , C[i].d[0]);
-    //p = cu_bn_usub(dev_A[i], dev_B[i], dev_C[i]);
+    //p = cu_dev_bn_usub(dev_A[i], dev_B[i], dev_C[i]);
     //cuPrintf("testKernel: %d\n", p);
 }
 
 int main(void){
     int L = 128, //.Data length
         N = 1;
+
+    unit_test(); //check all host bn functions
 
     VQ_VECTOR   *A;
     VQ_VECTOR   *device_VQ_VECTOR_A;
@@ -342,8 +344,8 @@ int main(void){
         C[i] = c;
     }
 
-    cu_BN_dec2bn(&A[0], "1053354540224");
-    cu_BN_dec2bn(&B[0], "14823829824");
+    cu_BN_dec2bn(&A[0], "858238501677248042531768818944");
+    cu_BN_dec2bn(&B[0], "8353015802438879251643065122143616");
     cu_BN_dec2bn(&C[0], "437768685634765");
     L=A[0].top;
     L=B[0].top;

@@ -234,8 +234,8 @@ char *cu_bn_bn2hex(const VQ_VECTOR *a){
     return (p);
 
 }
-/*
-__device__ int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
+
+int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -255,17 +255,17 @@ __device__ int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
 
 }
 
-__device__ long cu_long_abs(long number){
+long cu_long_abs(long number){
 
     if(number<0)
         return -number;
     else
         return number;
 
-}*/
+}
 
 /* unsigned subtraction of b from a, a must be larger than b. */
-/*__device__ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
+int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
 
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
@@ -308,10 +308,10 @@ __device__ long cu_long_abs(long number){
     bp += min;
     rp += min;
 #endif
-    if (carry) {    */            /* subtracted */
-     /*   if (!dif)*/
+    if (carry) {              /* subtracted */
+        if (!dif)
             /* error: a < b */
-         /*   return 0;
+            return 0;
         while (dif) {
             dif--;
             t1 = *(ap++);
@@ -348,7 +348,7 @@ __device__ long cu_long_abs(long number){
     cu_bn_correct_top(r);
     return (1);
 
-}*/
+}
 
 int cu_bn_num_bits_word(long l){
 
@@ -491,8 +491,7 @@ char *string_num_add_long(const char *a, long word){
 
 }
 
-/*
-__device__ int cu_BN_rshift1(VQ_VECTOR *a){
+int cu_BN_rshift1(VQ_VECTOR *a){
 
     if(NULL == a)
         return 0;
@@ -535,7 +534,7 @@ __device__ int cu_BN_rshift1(VQ_VECTOR *a){
 
 }
 
-__device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
+int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
     if(NULL == a)
         return 0;
@@ -568,10 +567,9 @@ __device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
     }
 
     if(nw || nwb){
-        return 0;
-        //a->d = (unsigned*)cu_realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
-        //memset((a->d+a->top), 0, (nw + nwb)*sizeof(unsigned));
-        //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
+        a->d = (unsigned*)realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
+        memset((a->d+a->top), 0, (nw + nwb)*sizeof(unsigned));
+        memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
 
     if (lb == 0 && nw != 0 ){
@@ -595,7 +593,7 @@ __device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
 }
 
-__device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
+VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
 
     VQ_VECTOR *t = NULL;
     unsigned shifts = 0;
@@ -653,4 +651,4 @@ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
     //cu_BN_free(t);
     return (a);
 
-}*/
+}
