@@ -15,6 +15,8 @@
                                   __VA_ARGS__)
 #endif
 
+#define MAIN_COMPUTATIONS 1
+
 
 __device__ int cu_dev_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
 
@@ -133,6 +135,7 @@ __device__ int cu_dev_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR 
 
 __device__ int cu_dev_bn_rshift1(VQ_VECTOR *a){
 
+
     if(NULL == a)
         return 0;
 
@@ -146,28 +149,19 @@ __device__ int cu_dev_bn_rshift1(VQ_VECTOR *a){
     int i, j;
 
     i = a->top;
-    DEBUG_PRINT("a->top: %u\n", a->top);
     ap = a->d;
-    DEBUG_PRINT("a->d[0]: %u\n", a->d[0]);
 
     j = i - (ap[i - 1] == 1);
-    DEBUG_PRINT("j: %d\n", j);
 
     rp = a->d;
     t = ap[--i];
-    DEBUG_PRINT("t: %u\n", t);
     c = (t & 1) ? CU_BN_TBIT : 0;
-    DEBUG_PRINT("c: %u\n", c);
     if (t >>= 1)
         rp[i] = t;
     while (i > 0) {
         t = ap[--i];
-        DEBUG_PRINT("i: %d\n", i);
-        DEBUG_PRINT("t: %u\n", t);
         rp[i] = ((t >> 1) & CU_BN_MASK2) | c;
-        DEBUG_PRINT("rp[%d]: %u\n", i, rp[i]);
         c = (t & 1) ? CU_BN_TBIT : 0;
-        DEBUG_PRINT("c: %u\n", c);
     }
     a->top = j;
     return (1);
@@ -193,40 +187,27 @@ __device__ int cu_dev_bn_lshift(VQ_VECTOR *a, unsigned n){
     unsigned nwb = 0, c = 0;
 
     nw = (n / CU_BN_BITS2);
-    DEBUG_PRINT("nw: %u\n", nw);
     lb = (n % CU_BN_BITS2);
-    DEBUG_PRINT("lb: %u\n", lb);
     rb = (CU_BN_BITS2 - lb);
-    DEBUG_PRINT("rb: %u\n", rb);
 
-    for(i = 31; i>=0; i--){
-        if((a->d[a->top-1]>>nwb)&1){ 
-            nwb = ((rb>=i)?1:0);
-            break;
-        }
-    }
-
+    l=a->d[a->top-1];
+    if( (l >> rb) > 0 ) nwb = 1;
     if(nw || nwb){
-        return 0;
-        // cant't use host function realloc in device function 
-
-        //a->d = (unsigned*)realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
-        //memset((a->d+a->top), 0, (nw + nwb)*sizeof(unsigned));
+        //a->d = (unsigned*)realloc(a->d, (a->top + nw + nwb)*sizeof(unsigned)) ;
+        a->d[a->top]=0;
+        //memset((a->d+a->top-1), 0, (nw + nwb));
         //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
 
     if (lb == 0 && nw != 0 ){
         for (i = a->top - 1; i >= 0; i--){
             a->d[nw + i] = a->d[i];
-            DEBUG_PRINT("a->d[nw + i]: %u\n", a->d[nw + i]);
         }
     } else {
         for (i = 0; i < (a->top + nw + nwb); i++) {
             l = a->d[i];
-            DEBUG_PRINT("l = a->d[%d]: %u\n", i, l);
             a->d[i] = (l << lb) | c;
             c = (l >> rb);
-            DEBUG_PRINT("after lshift a->d[%d]: %u\n", i, a->d[i]);
 
         }
 
@@ -236,8 +217,8 @@ __device__ int cu_dev_bn_lshift(VQ_VECTOR *a, unsigned n){
 
 }
 
-__device__ VQ_VECTOR *cu_dev_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
 
+__device__ VQ_VECTOR *cu_dev_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
     VQ_VECTOR *t = NULL;
     unsigned shifts = 0;
     while (!CU_BN_is_zero(b)) {
@@ -266,13 +247,12 @@ __device__ VQ_VECTOR *cu_dev_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
                     a = b;
                     b = t;
                 }
-            } else {       
+            } else {      
                 cu_dev_bn_rshift1(a);
                 cu_dev_bn_rshift1(b);
                 shifts++;
             }
         }
-
     }
 
     if (shifts) {
@@ -287,21 +267,20 @@ __global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
     //int p;
     //for(int k=0; k<N; k++)
     VQ_VECTOR *TMP;
-
-    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , A[i].d[0]);
-    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , B[i].d[0]);
     //cu_dev_bn_usub(&A[i], &B[i], &C[i]);
     //cu_dev_bn_lshift(&C[i], 4);
     TMP = cu_dev_euclid(&A[i], &B[i]);
-    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
+    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
+    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[1]);
     C[0] = *TMP;
-    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , C[i].d[0]);
+
+    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , cu_dev_euclid(&A[i], &B[i])->d[1]);
     //p = cu_dev_bn_usub(dev_A[i], dev_B[i], dev_C[i]);
     //cuPrintf("testKernel: %d\n", p);
 }
 
 int main(void){
-    int L = 128, //.Data length
+    int L = 5, //.Data length
         N = 1;
 
     unit_test(); //check all host bn functions
@@ -346,7 +325,6 @@ int main(void){
 
     cu_BN_dec2bn(&A[0], "858238501677248042531768818944");
     cu_BN_dec2bn(&B[0], "8353015802438879251643065122143616");
-    cu_BN_dec2bn(&C[0], "437768685634765");
     L=A[0].top;
     L=B[0].top;
     L=C[0].top;
@@ -421,6 +399,8 @@ int main(void){
         fprintf(stderr, "\n testKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return 1;
     }
+
+    printf("cuda_kernel result c[0]=%s\n", cu_bn_bn2hex(&C[0]));
 
     cudaFree(device_VQ_VECTOR_A);
     cudaFree(device_VQ_VECTOR_B);

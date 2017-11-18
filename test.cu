@@ -2,26 +2,26 @@
 
 void unit_test(void){
 	INFO("tests start...\n");
-	cu_BN_new_test();
-	Hw_test();
-	Lw_test();
-	cu_BN_mul_words_test();
-	cu_BN_mul_word_test();
-	cu_BN_set_word_test();
-	cu_BN_add_word_test();
-	cu_BN_dec2bn_test();
-	cu_BN_bn2hex_test();
-	cu_BN_ucmp_test();
-	cu_long_abs_test();
-	cu_bn_usub_test();
-	cu_bn_num_bits_word_test();
-	cu_bn_num_bits_test();
-	string_num_add_test();
-	number_of_digits_test();
-	long2string_test();
-	string_num_add_long_test();
-	cu_bn_rshift1_test();
-	cu_BN_lshift_test();
+	//cu_BN_new_test();
+	//Hw_test();
+	//Lw_test();
+	//cu_BN_mul_words_test();
+	//cu_BN_mul_word_test();
+	//cu_BN_set_word_test();
+	//cu_BN_add_word_test();
+	//cu_BN_dec2bn_test();
+	//cu_BN_bn2hex_test();
+	//cu_BN_ucmp_test();
+	//cu_long_abs_test();
+	//cu_bn_usub_test();
+	//cu_bn_num_bits_word_test();
+	//cu_bn_num_bits_test();
+	//string_num_add_test();
+	//number_of_digits_test();
+	//long2string_test();
+	//string_num_add_long_test();
+	//cu_bn_rshift1_test();
+	//cu_BN_lshift_test();
 	cu_euclid_test();
 	INFO("tests completed\n");
 }
@@ -234,21 +234,51 @@ void cu_bn_rshift1_test(void){
 void cu_BN_lshift_test(void){
 	VQ_VECTOR   *A = NULL;
 	A = cu_BN_new();
-	cu_BN_dec2bn(A, "956348568346856346");
-	assert(1 == cu_BN_lshift(A, 4));
-	assert(!strcmp("D45A1F4B9C48B9A0", cu_bn_bn2hex(A)));
+	cu_BN_dec2bn(A, "231622341");
+	assert(1 == cu_BN_lshift(A, 7));
+	assert(!strcmp("6E7236280", cu_bn_bn2hex(A)));
 	cu_BN_free(A);
 	INFO("Test passed\n");
 }
 
 void cu_euclid_test(void){
 	VQ_VECTOR   *A = NULL, *B = NULL;
-	A = cu_BN_new();
+	unsigned L=5, N=1; 
+	/*A = cu_BN_new();
 	B = cu_BN_new();
-	cu_BN_dec2bn(A, "211319228244187486513184688950596901432020552950859782");
-	cu_BN_dec2bn(B, "37724566494969212902300091545866760828606124226");
+	cu_BN_dec2bn(A, "8353015802438879251643065122143616");
+	cu_BN_dec2bn(B, "858238501677248042531768818944");
 	A = cu_euclid(A, B);
-	//INFO("15417B103640DD7A2752917A=%s\n", cu_bn_bn2hex(A));
-	cu_BN_free(A);
-	INFO("Test passed\n");
+	INFO("6E7236280=%s\n", cu_bn_bn2hex(A));
+	cu_BN_free(A);*/
+
+
+    A =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
+    B =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
+
+    for(int i=0; i<N; i++){
+        VQ_VECTOR a;
+        VQ_VECTOR b;
+        a.d = (unsigned*)malloc(L*sizeof(unsigned));
+        b.d = (unsigned*)malloc(L*sizeof(unsigned));
+        a.top =   L;
+        b.top =   L;
+
+        for(int j=0; j<L; j++)
+            a.d[j]=0;
+
+        for(int j=0; j<L; j++)
+            b.d[j]=0;
+
+        A[i] = a;
+        B[i] = b;
+    }
+
+    cu_BN_dec2bn(&A[0], "858238501677248042531768818944");
+    cu_BN_dec2bn(&B[0], "8353015802438879251643065122143616");
+
+    A = cu_euclid(&A[0], &B[0]);
+	INFO("6E7236280=%s\n", cu_bn_bn2hex(A));
+
+    INFO("Test passed\n");
 }

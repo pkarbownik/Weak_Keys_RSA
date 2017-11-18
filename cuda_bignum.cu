@@ -50,13 +50,13 @@ unsigned cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  
     while (num) {
         tmp= Lw(((unsigned long)(ap[i]) * (w) + (c1)));
         c1= Hw(((unsigned long)(ap[i]) * (w) + (c1)));
-        DEBUG_PRINT("ap[%u]: %u\n", i, ap[i]);
-        DEBUG_PRINT("rp[%u]: %u\n", i, tmp);
+        //DEBUG_PRINT("ap[%u]: %u\n", i, ap[i]);
+        //DEBUG_PRINT("rp[%u]: %u\n", i, tmp);
         rp[i] = tmp;
         i++;
         num--;
     }
-    DEBUG_PRINT("w: %u\n", w);
+    //DEBUG_PRINT("w: %u\n", w);
     return (c1);
 
 }
@@ -93,8 +93,8 @@ int cu_BN_mul_word(VQ_VECTOR *a, unsigned w){
             if (ll) {
                 a->d = ((unsigned*)realloc(a->d, (++a->top)*sizeof(unsigned))); 
                 a->d[(a->top-1)] = ll;
-                DEBUG_PRINT("a->d[(a->top-1)]: %u\n", a->d[(a->top-1)]);
-                DEBUG_PRINT("a->top: %u\n", a->top);
+                //DEBUG_PRINT("a->d[(a->top-1)]: %u\n", a->d[(a->top-1)]);
+                //DEBUG_PRINT("a->top: %u\n", a->top);
             }
         }
     }
@@ -173,7 +173,7 @@ int cu_BN_dec2bn(VQ_VECTOR *ret, const char *a){
         continue;
 
 
-    DEBUG_PRINT("number of digits: %u\n", i);
+    //DEBUG_PRINT("number of digits: %u\n", i);
 
     if (i > INT_MAX/4)
         return 0;
@@ -189,7 +189,7 @@ int cu_BN_dec2bn(VQ_VECTOR *ret, const char *a){
         l += *a - '0';
         a++;
         if (++j == CU_BN_DEC_NUM) {
-            DEBUG_PRINT("l: %u\n", l);
+            //DEBUG_PRINT("l: %u\n", l);
             cu_BN_mul_word(ret, CU_BN_DEC_CONV);
             cu_BN_add_word(ret, l);
             l = 0;
@@ -506,28 +506,28 @@ int cu_BN_rshift1(VQ_VECTOR *a){
     int i, j;
 
     i = a->top;
-    DEBUG_PRINT("a->top: %u\n", a->top);
+    //DEBUG_PRINT("a->top: %u\n", a->top);
     ap = a->d;
-    DEBUG_PRINT("a->d[0]: %u\n", a->d[0]);
+    //DEBUG_PRINT("a->d[0]: %u\n", a->d[0]);
 
     j = i - (ap[i - 1] == 1);
-    DEBUG_PRINT("j: %d\n", j);
+    //DEBUG_PRINT("j: %d\n", j);
 
     rp = a->d;
     t = ap[--i];
-    DEBUG_PRINT("t: %u\n", t);
+    //DEBUG_PRINT("t: %u\n", t);
     c = (t & 1) ? CU_BN_TBIT : 0;
-    DEBUG_PRINT("c: %u\n", c);
+    //DEBUG_PRINT("c: %u\n", c);
     if (t >>= 1)
         rp[i] = t;
     while (i > 0) {
         t = ap[--i];
-        DEBUG_PRINT("i: %d\n", i);
-        DEBUG_PRINT("t: %u\n", t);
+        //DEBUG_PRINT("i: %d\n", i);
+        //DEBUG_PRINT("t: %u\n", t);
         rp[i] = ((t >> 1) & CU_BN_MASK2) | c;
-        DEBUG_PRINT("rp[%d]: %u\n", i, rp[i]);
+        //DEBUG_PRINT("rp[%d]: %u\n", i, rp[i]);
         c = (t & 1) ? CU_BN_TBIT : 0;
-        DEBUG_PRINT("c: %u\n", c);
+        //DEBUG_PRINT("c: %u\n", c);
     }
     a->top = j;
     return (1);
@@ -559,18 +559,16 @@ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
     rb = (CU_BN_BITS2 - lb);
     DEBUG_PRINT("rb: %u\n", rb);
 
-    for(i = 31; i>=0; i--){
-        if((a->d[a->top-1]>>nwb)&1){ 
-            nwb = ((rb>=i)?1:0);
-            break;
-        }
-    }
+    l=a->d[a->top-1];
+    if( (l >> rb) > 0 ) nwb = 1;
 
     if(nw || nwb){
-        a->d = (unsigned*)realloc(a->d, (a->top+ nw + nwb)*sizeof(unsigned)) ;
-        memset((a->d+a->top), 0, (nw + nwb)*sizeof(unsigned));
-        memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
+        //a->d = (unsigned*)realloc(a->d, (a->top + nw + nwb)*sizeof(unsigned)) ;
+        a->d[a->top]=0;
+        //memset((a->d+a->top-1), 0, (nw + nwb));
+        //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
+    DEBUG_PRINT("nwb: %u\n", nwb);
 
     if (lb == 0 && nw != 0 ){
         for (i = a->top - 1; i >= 0; i--){
@@ -589,6 +587,7 @@ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
     }
     a->top += (nw + nwb);
+    DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
     return (1);
 
 }
@@ -600,11 +599,11 @@ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
     while (!CU_BN_is_zero(b)) {
         if (cu_BN_is_odd(a)) {
             if (cu_BN_is_odd(b)) {
-                DEBUG_PRINT("b id odd, a is equal: %s\n", cu_bn_bn2hex(a));
+                DEBUG_PRINT("b id odd, a is odd, a is equal: %s\n", cu_bn_bn2hex(a));
                 cu_bn_usub(a, b, a);
-                DEBUG_PRINT("b id odd, a-b is equal: %s\n", cu_bn_bn2hex(a));
-                cu_BN_rshift1(a);
-                DEBUG_PRINT("b id odd, a-b>>1 is equal: %s\n", cu_bn_bn2hex(a));
+                DEBUG_PRINT("b id odd, a is odd, a-b is equal: %s\n", cu_bn_bn2hex(a));
+                cu_BN_rshift1(a); // beacuse subtraction is even
+                DEBUG_PRINT("b id odd, a is odd, a-b>>1 is equal: %s\n", cu_bn_bn2hex(a));
                 if (cu_BN_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
@@ -640,6 +639,7 @@ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
                 shifts++;
             }
         }
+        DEBUG_PRINT("\n");
     }
 
     if (shifts) {
