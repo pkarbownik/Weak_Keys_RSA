@@ -23,6 +23,7 @@ void unit_test(void){
 	cu_bn_rshift1_test();
 	cu_BN_lshift_test();
 	cu_euclid_test();
+	bignum2u_bn_test();
 	INFO("tests completed\n");
 }
 
@@ -281,4 +282,19 @@ void cu_euclid_test(void){
 	INFO("6E7236280=%s\n", cu_bn_bn2hex(A));
 
     INFO("Test passed\n");
+}
+
+void bignum2u_bn_test(void){
+	BIGNUM *bn;
+	U_BN *u_bn;
+	bn = BN_new();
+	u_bn = cu_BN_new();
+	assert( 0 < BN_dec2bn(&bn, "54635484657846634") );
+	assert( 1 == bignum2u_bn(bn, u_bn) );
+	INFO("C21AAF0F29896A=%s\n", cu_bn_bn2hex(u_bn));
+	assert(!strcmp("C21AAF0F29896A", cu_bn_bn2hex(u_bn)));
+	cu_BN_free(u_bn);
+	BN_free(bn);
+	INFO("Test passed\n");
+
 }

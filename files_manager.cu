@@ -10,8 +10,6 @@ void print_mod_from_pem_file(char * filePath){
 	}
 
 	RSA* rsa = EVP_PKEY_get1_RSA(pPubKey);
-	//BN_print_fp(stdout, rsa->n);
-	printf("Public modulus:\n");
-	fprintf(stdout, "%s", BN_bn2dec(rsa->n));
+	BN_print_fp(stdout, rsa->n);
 	printf("\n");
 }

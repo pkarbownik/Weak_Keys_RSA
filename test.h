@@ -38,4 +38,5 @@ void cu_bn_copy_test(void);
 void cu_bn_rshift1_test(void);
 void cu_BN_lshift_test(void);
 void cu_euclid_test(void);
+void bignum2u_bn_test(void);
 #endif /* TEST_H */
