@@ -74,15 +74,15 @@ __device__ int cu_dev_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR 
         t2 = *(bp++);
         if (carry) {
             carry = (t1 <= t2);
-            t1 = (t1 - t2 - 1) & BN_MASK2;
+            t1 = (t1 - t2 - 1);// & BN_MASK2;
         } else {
             carry = (t1 < t2);
-            t1 = (t1 - t2) & BN_MASK2;
+            t1 = (t1 - t2);// & BN_MASK2;
         }
 # if defined(IRIX_CC_BUG) && !defined(LINT)
         dummy = t1;
 # endif
-        *(rp++) = t1 & BN_MASK2;
+        *(rp++) = t1;// & BN_MASK2;
     }
 #else
     carry = bn_sub_words(rp, ap, bp, min);
@@ -97,7 +97,7 @@ __device__ int cu_dev_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR 
         while (dif) {
             dif--;
             t1 = *(ap++);
-            t2 = (t1 - 1) & BN_MASK2;
+            t2 = (t1 - 1);// & BN_MASK2;
             *(rp++) = t2;
             if (t1)
                 break;
@@ -142,7 +142,7 @@ __device__ int cu_dev_bn_rshift1(VQ_VECTOR *a){
     if(NULL == a->d)
         return 0;
 
-    if (BN_is_zero(a))
+    if (CU_BN_is_zero(a))
         return 0;
 
     unsigned *ap, *rp , t, c;
@@ -176,7 +176,7 @@ __device__ int cu_dev_bn_lshift(VQ_VECTOR *a, unsigned n){
     if(NULL == a->d)
         return 0;
 
-    if (BN_is_zero(a))
+    if (CU_BN_is_zero(a))
         return 0;
 
     if (0 == n)
@@ -267,6 +267,7 @@ __global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
     VQ_VECTOR *TMP;
     //cu_dev_bn_usub(&A[i], &B[i], &C[i]);
     //cu_dev_bn_lshift(&C[i], 4);
+    
     TMP = cu_dev_euclid(&A[i], &B[i]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[1]);
@@ -293,7 +294,7 @@ int main(void){
     C =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
 
     for(int i=0; i<N; i++){
-        
+
         VQ_VECTOR a;
         VQ_VECTOR b;
         VQ_VECTOR c;

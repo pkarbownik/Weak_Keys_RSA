@@ -214,7 +214,7 @@ char *cu_bn_bn2hex(const VQ_VECTOR *a){
     if(NULL == a->d)
         return 0;
 
-    if (BN_is_zero(a))
+    if (CU_BN_is_zero(a))
         return 0;
 
     buf = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top + 1));
@@ -293,15 +293,15 @@ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
         t2 = *(bp++);
         if (carry) {
             carry = (t1 <= t2);
-            t1 = (t1 - t2 - 1) & BN_MASK2;
+            t1 = (t1 - t2 - 1);// & BN_MASK2;
         } else {
             carry = (t1 < t2);
-            t1 = (t1 - t2) & BN_MASK2;
+            t1 = (t1 - t2);// & BN_MASK2;
         }
 # if defined(IRIX_CC_BUG) && !defined(LINT)
         dummy = t1;
 # endif
-        *(rp++) = t1 & BN_MASK2;
+        *(rp++) = t1;// & BN_MASK2;
     }
 #else
     carry = bn_sub_words(rp, ap, bp, min);
@@ -316,7 +316,7 @@ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
         while (dif) {
             dif--;
             t1 = *(ap++);
-            t2 = (t1 - 1) & BN_MASK2;
+            t2 = (t1 - 1);// & BN_MASK2;
             *(rp++) = t2;
             if (t1)
                 break;
@@ -500,7 +500,7 @@ int cu_BN_rshift1(VQ_VECTOR *a){
     if(NULL == a->d)
         return 0;
 
-    if (BN_is_zero(a))
+    if (CU_BN_is_zero(a))
         return 0;
 
     unsigned *ap, *rp , t, c;
@@ -543,7 +543,7 @@ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
     if(NULL == a->d)
         return 0;
 
-    if (BN_is_zero(a))
+    if (CU_BN_is_zero(a))
         return 0;
 
     if (0 == n)
