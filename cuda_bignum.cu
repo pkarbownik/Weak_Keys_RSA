@@ -18,11 +18,11 @@ char *strrev(char *str){
       return str;
 }
 
-VQ_VECTOR *cu_BN_new(void)
+U_BN *cu_BN_new(void)
 {
-    VQ_VECTOR *ret;
+    U_BN *ret;
 
-    if ((ret = (VQ_VECTOR *)malloc(sizeof(*ret))) == NULL) {
+    if ((ret = (U_BN *)malloc(sizeof(*ret))) == NULL) {
         return (NULL);
     }
     ret->top = 0;
@@ -30,7 +30,7 @@ VQ_VECTOR *cu_BN_new(void)
     return (ret);
 }
 
-void cu_BN_free(VQ_VECTOR *a)
+void cu_BN_free(U_BN *a)
 {
     if (a == NULL)
         return;
@@ -74,7 +74,7 @@ unsigned cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  
     return (new_p);
 }*/
 
-int cu_BN_mul_word(VQ_VECTOR *a, unsigned w){
+int cu_BN_mul_word(U_BN *a, unsigned w){
 
     unsigned ll;
     if(NULL == a)
@@ -102,7 +102,7 @@ int cu_BN_mul_word(VQ_VECTOR *a, unsigned w){
 
 }
 
-int cu_BN_set_word(VQ_VECTOR *a, unsigned w){
+int cu_BN_set_word(U_BN *a, unsigned w){
 
     if(NULL == a)
         return 0;
@@ -117,7 +117,7 @@ int cu_BN_set_word(VQ_VECTOR *a, unsigned w){
 
 }
 
-int cu_BN_add_word(VQ_VECTOR *a, unsigned w){
+int cu_BN_add_word(U_BN *a, unsigned w){
 
     unsigned l;
     int i;
@@ -151,7 +151,7 @@ int cu_BN_add_word(VQ_VECTOR *a, unsigned w){
 
 }
 
-int cu_BN_dec2bn(VQ_VECTOR *ret, const char *a){
+int cu_BN_dec2bn(U_BN *ret, const char *a){
 
     unsigned l;
     int j, i;
@@ -202,7 +202,7 @@ int cu_BN_dec2bn(VQ_VECTOR *ret, const char *a){
 }
 
 /* Must 'OPENSSL_free' the returned data */
-char *cu_bn_bn2hex(const VQ_VECTOR *a){
+char *cu_bn_bn2hex(const U_BN *a){
 
     int i, j, v, z = 0;
     char *buf = NULL, *p = NULL;
@@ -236,7 +236,7 @@ char *cu_bn_bn2hex(const VQ_VECTOR *a){
 
 }
 
-int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
+int cu_BN_ucmp(const U_BN *a, const U_BN *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -266,7 +266,7 @@ long cu_long_abs(long number){
 }
 
 /* unsigned subtraction of b from a, a must be larger than b. */
-int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
+int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
 
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
@@ -424,7 +424,7 @@ int cu_bn_num_bits_word(long l){
 
 }
 
-int cu_bn_num_bits(const VQ_VECTOR *a){
+int cu_bn_num_bits(const U_BN *a){
 
     int i = a->top - 1;
 
@@ -492,7 +492,7 @@ char *string_num_add_long(const char *a, long word){
 
 }
 
-int cu_BN_rshift1(VQ_VECTOR *a){
+int cu_BN_rshift1(U_BN *a){
 
     if(NULL == a)
         return 0;
@@ -535,7 +535,7 @@ int cu_BN_rshift1(VQ_VECTOR *a){
 
 }
 
-int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
+int cu_BN_lshift(U_BN *a, unsigned n){
 
     if(NULL == a)
         return 0;
@@ -593,9 +593,9 @@ int cu_BN_lshift(VQ_VECTOR *a, unsigned n){
 
 }
 
-VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
+U_BN *cu_euclid(U_BN *a, U_BN *b){
 
-    VQ_VECTOR *t = NULL;
+    U_BN *t = NULL;
     unsigned shifts = 0;
     while (!CU_BN_is_zero(b)) {
         if (cu_BN_is_odd(a)) {

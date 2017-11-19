@@ -19,12 +19,12 @@
  #define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
 #endif
 
-struct   __Q_VECTOR__{
+struct   __U_BN__{
     unsigned* d;       
     int     top;    
 };
 
-typedef struct __Q_VECTOR__     VQ_VECTOR;
+typedef struct __U_BN__     U_BN;
 
 #define debug(fmt, ...) printf("%s:%d: " fmt, __FILE__, __LINE__, __VA_ARGS__);
 
@@ -68,29 +68,29 @@ typedef struct __Q_VECTOR__     VQ_VECTOR;
 #define Lw(t)    (((unsigned)t))
 #define Hw(t)    ((unsigned)((t)>>CU_BN_BITS2))
 
-//extern __global__ void testKernel(VQ_VECTOR *X, int N);
+//extern __global__ void testKernel(U_BN *X, int N);
 
 //unsigned bn_mul_add_words(unsigned *rp, const unsigned *ap, int num, unsigned w);
 __host__ __device__ char *strrev(char *str);
-__host__ __device__ VQ_VECTOR *cu_BN_new();
-__host__ __device__ void cu_BN_free(VQ_VECTOR *a);
-__host__ __device__ int cu_BN_set_word(VQ_VECTOR *a, unsigned w);
-__host__ __device__ int cu_BN_mul_word(VQ_VECTOR *a, unsigned w);
-__host__ __device__ int cu_BN_add_word(VQ_VECTOR *a, unsigned w);
-__host__ __device__ int cu_BN_dec2bn(VQ_VECTOR * ret, const char *a);
+__host__ __device__ U_BN *cu_BN_new();
+__host__ __device__ void cu_BN_free(U_BN *a);
+__host__ __device__ int cu_BN_set_word(U_BN *a, unsigned w);
+__host__ __device__ int cu_BN_mul_word(U_BN *a, unsigned w);
+__host__ __device__ int cu_BN_add_word(U_BN *a, unsigned w);
+__host__ __device__ int cu_BN_dec2bn(U_BN * ret, const char *a);
 __host__ __device__ unsigned  cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
-__host__ __device__ char *cu_bn_bn2hex(const VQ_VECTOR *a);
-__host__ __device__ int cu_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b);
+__host__ __device__ char *cu_bn_bn2hex(const U_BN *a);
+__host__ __device__ int cu_BN_ucmp(const U_BN *a, const U_BN *b);
 __host__ __device__ long cu_long_abs(long number);
-__host__ __device__ int cu_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *c);
+__host__ __device__ int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *c);
 __host__ __device__ int cu_bn_num_bits_word(long l);
-__host__ __device__ int cu_bn_num_bits(const VQ_VECTOR *a);
+__host__ __device__ int cu_bn_num_bits(const U_BN *a);
 __host__ __device__ unsigned number_of_digits(long number);
 __host__ __device__ char *long2string(long number);
 __host__ __device__ char *string_num_add(const char *a, const char *b);
 __host__ __device__ char *string_num_add_long(const char *a, long b);
-__host__ __device__ int cu_bn_copy(VQ_VECTOR *a, const  VQ_VECTOR *b);
-__host__ __device__ int cu_BN_rshift1(VQ_VECTOR *a);
-__host__ __device__ int cu_BN_lshift(VQ_VECTOR *a, unsigned n);
-__host__ __device__ VQ_VECTOR *cu_euclid(VQ_VECTOR *a, VQ_VECTOR *b);
+__host__ __device__ int cu_bn_copy(U_BN *a, const  U_BN *b);
+__host__ __device__ int cu_BN_rshift1(U_BN *a);
+__host__ __device__ int cu_BN_lshift(U_BN *a, unsigned n);
+__host__ __device__ U_BN *cu_euclid(U_BN *a, U_BN *b);
 #endif /* CUDA_BIGNUM_H */

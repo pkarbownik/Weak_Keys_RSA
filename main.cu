@@ -1,10 +1,8 @@
 #include "cuPrintf.cu"
 #include "test.h"
 #include "cuda_bignum.h"
+#include "files_manager.h"
 //#include <openssl/bn.h>
-//The macro CUPRINTF is defined for architectures
-//with different compute capabilities.
-
 
 #if __CUDA_ARCH__ < 200     //Compute capability 1.x architectures
 #define CUPRINTF cuPrintf
@@ -18,7 +16,7 @@
 #define MAIN_COMPUTATIONS 1
 
 
-__device__ int cu_dev_BN_ucmp(const VQ_VECTOR *a, const VQ_VECTOR *b){
+__device__ int cu_dev_BN_ucmp(const U_BN *a, const U_BN *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -47,7 +45,7 @@ __device__ long cu_dev_long_abs(long number){
 
 }
 
-__device__ int cu_dev_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR *r){
+__device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
 
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
@@ -133,7 +131,7 @@ __device__ int cu_dev_bn_usub(const VQ_VECTOR *a, const VQ_VECTOR *b, VQ_VECTOR 
 }
 
 
-__device__ int cu_dev_bn_rshift1(VQ_VECTOR *a){
+__device__ int cu_dev_bn_rshift1(U_BN *a){
 
 
     if(NULL == a)
@@ -168,7 +166,7 @@ __device__ int cu_dev_bn_rshift1(VQ_VECTOR *a){
 
 }
 
-__device__ int cu_dev_bn_lshift(VQ_VECTOR *a, unsigned n){
+__device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
 
     if(NULL == a)
         return 0;
@@ -218,8 +216,8 @@ __device__ int cu_dev_bn_lshift(VQ_VECTOR *a, unsigned n){
 }
 
 
-__device__ VQ_VECTOR *cu_dev_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
-    VQ_VECTOR *t = NULL;
+__device__ U_BN *cu_dev_euclid(U_BN *a, U_BN *b){
+    U_BN *t = NULL;
     unsigned shifts = 0;
     while (!CU_BN_is_zero(b)) {
         if (cu_BN_is_odd(a)) {
@@ -262,9 +260,9 @@ __device__ VQ_VECTOR *cu_dev_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
 
 }
 
-__global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
+__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int N){
     int i= blockIdx.x * blockDim.x + threadIdx.x;
-    VQ_VECTOR *TMP;
+    U_BN *TMP;
     //cu_dev_bn_usub(&A[i], &B[i], &C[i]);
     //cu_dev_bn_lshift(&C[i], 4);
     
@@ -279,25 +277,26 @@ int main(void){
         N = 100;
 
     unit_test(); //check all host bn functions
+    print_mod_from_pem_file("keys_and_messages/1.pem");
 
-    VQ_VECTOR   *A;
-    VQ_VECTOR   *device_VQ_VECTOR_A;
-    VQ_VECTOR   *B;
-    VQ_VECTOR   *device_VQ_VECTOR_B;
-    VQ_VECTOR   *C;
-    VQ_VECTOR   *device_VQ_VECTOR_C;
+    U_BN   *A;
+    U_BN   *device_U_BN_A;
+    U_BN   *B;
+    U_BN   *device_U_BN_B;
+    U_BN   *C;
+    U_BN   *device_U_BN_C;
 
     cudaError_t cudaStatus;
 
-    A =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
-    B =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
-    C =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
+    A =   (U_BN*)malloc(N*sizeof(U_BN));
+    B =   (U_BN*)malloc(N*sizeof(U_BN));
+    C =   (U_BN*)malloc(N*sizeof(U_BN));
 
     for(int i=0; i<N; i++){
 
-        VQ_VECTOR a;
-        VQ_VECTOR b;
-        VQ_VECTOR c;
+        U_BN a;
+        U_BN b;
+        U_BN c;
         a.d = (unsigned*)malloc(L*sizeof(unsigned));
         b.d = (unsigned*)malloc(L*sizeof(unsigned));
         c.d = (unsigned*)malloc(L*sizeof(unsigned));
@@ -328,26 +327,26 @@ int main(void){
 
 
     cudaDeviceReset();
-    cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR_A, N*sizeof(VQ_VECTOR));    
-    cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR_B, N*sizeof(VQ_VECTOR));
-    cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR_C, N*sizeof(VQ_VECTOR));
-    cudaStatus = cudaMemcpy(device_VQ_VECTOR_A, A, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
-    cudaStatus = cudaMemcpy(device_VQ_VECTOR_B, B, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
-    cudaStatus = cudaMemcpy(device_VQ_VECTOR_C, C, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMalloc((void**)&device_U_BN_A, N*sizeof(U_BN));    
+    cudaStatus = cudaMalloc((void**)&device_U_BN_B, N*sizeof(U_BN));
+    cudaStatus = cudaMalloc((void**)&device_U_BN_C, N*sizeof(U_BN));
+    cudaStatus = cudaMemcpy(device_U_BN_A, A, N*sizeof(U_BN), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(device_U_BN_B, B, N*sizeof(U_BN), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(device_U_BN_C, C, N*sizeof(U_BN), cudaMemcpyHostToDevice);
 
     for(int i = 0; i < N; ++i) {
         unsigned long *out;
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, A[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
-        cudaMemcpy(&device_VQ_VECTOR_A[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
+        cudaMemcpy(&device_U_BN_A[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
 
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, B[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
-        cudaMemcpy(&device_VQ_VECTOR_B[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
+        cudaMemcpy(&device_U_BN_B[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
 
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, C[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
-        cudaMemcpy(&device_VQ_VECTOR_C[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
+        cudaMemcpy(&device_U_BN_C[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
 
         // will re-allocate later, for simplicity sake
         free(A[i].d);
@@ -356,7 +355,7 @@ int main(void){
     }
 
     cudaPrintfInit();
-    testKernel<<<1,N>>>(device_VQ_VECTOR_A, device_VQ_VECTOR_B, device_VQ_VECTOR_C, N);//to test and see on a sigle thread
+    testKernel<<<1,N>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, N);//to test and see on a sigle thread
     cudaPrintfDisplay(stdout, true);
     cudaPrintfEnd();
 
@@ -366,9 +365,9 @@ int main(void){
         return 1;
     }
 
-    cudaStatus = cudaMemcpy(A, device_VQ_VECTOR_A, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
-    cudaStatus = cudaMemcpy(B, device_VQ_VECTOR_B, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
-    cudaStatus = cudaMemcpy(C, device_VQ_VECTOR_C, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(A, device_U_BN_A, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(B, device_U_BN_B, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(C, device_U_BN_C, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
 
 
     for(int i = 0; i < N; ++i) {
@@ -393,8 +392,8 @@ int main(void){
         printf("cuda_kernel result c[%d]=%s\n", i, cu_bn_bn2hex(&C[i]));
     }
 
-    cudaFree(device_VQ_VECTOR_A);
-    cudaFree(device_VQ_VECTOR_B);
-    cudaFree(device_VQ_VECTOR_C);
+    cudaFree(device_U_BN_A);
+    cudaFree(device_U_BN_B);
+    cudaFree(device_U_BN_C);
     return 0;
 }
