@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include <openssl/bn.h>
 #include <string.h>
 #include <time.h>
 #include <assert.h>
@@ -93,4 +94,5 @@ __host__ __device__ int cu_bn_copy(U_BN *a, const  U_BN *b);
 __host__ __device__ int cu_BN_rshift1(U_BN *a);
 __host__ __device__ int cu_BN_lshift(U_BN *a, unsigned n);
 __host__ __device__ U_BN *cu_euclid(U_BN *a, U_BN *b);
+int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn);
 #endif /* CUDA_BIGNUM_H */

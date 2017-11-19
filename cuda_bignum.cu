@@ -653,3 +653,9 @@ U_BN *cu_euclid(U_BN *a, U_BN *b){
     return (a);
 
 }
+
+int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn){
+    memcpy(u_bn->d, bignum->d, sizeof(bignum->d[0]) * bignum->top);
+    u_bn->top = bignum->top;
+    return (1);
+}
