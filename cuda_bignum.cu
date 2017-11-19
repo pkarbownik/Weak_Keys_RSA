@@ -206,6 +206,7 @@ char *cu_bn_bn2hex(const VQ_VECTOR *a){
 
     int i, j, v, z = 0;
     char *buf = NULL, *p = NULL;
+    char Hex[] = "0123456789ABCDEF";
 
     if(NULL == a)
         return 0;
