@@ -2,26 +2,26 @@
 
 void unit_test(void){
 	INFO("tests start...\n");
-	//cu_BN_new_test();
-	//Hw_test();
-	//Lw_test();
-	//cu_BN_mul_words_test();
-	//cu_BN_mul_word_test();
-	//cu_BN_set_word_test();
-	//cu_BN_add_word_test();
-	//cu_BN_dec2bn_test();
-	//cu_BN_bn2hex_test();
-	//cu_BN_ucmp_test();
-	//cu_long_abs_test();
-	//cu_bn_usub_test();
-	//cu_bn_num_bits_word_test();
-	//cu_bn_num_bits_test();
-	//string_num_add_test();
-	//number_of_digits_test();
-	//long2string_test();
-	//string_num_add_long_test();
-	//cu_bn_rshift1_test();
-	//cu_BN_lshift_test();
+	cu_BN_new_test();
+	Hw_test();
+	Lw_test();
+	cu_BN_mul_words_test();
+	cu_BN_mul_word_test();
+	cu_BN_set_word_test();
+	cu_BN_add_word_test();
+	cu_BN_dec2bn_test();
+	cu_BN_bn2hex_test();
+	cu_BN_ucmp_test();
+	cu_long_abs_test();
+	cu_bn_usub_test();
+	cu_bn_num_bits_word_test();
+	cu_bn_num_bits_test();
+	string_num_add_test();
+	number_of_digits_test();
+	long2string_test();
+	string_num_add_long_test();
+	cu_bn_rshift1_test();
+	cu_BN_lshift_test();
 	cu_euclid_test();
 	INFO("tests completed\n");
 }

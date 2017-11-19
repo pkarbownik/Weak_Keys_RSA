@@ -264,24 +264,18 @@ __device__ VQ_VECTOR *cu_dev_euclid(VQ_VECTOR *a, VQ_VECTOR *b){
 
 __global__ void testKernel(VQ_VECTOR *A, VQ_VECTOR *B, VQ_VECTOR *C, int N){
     int i= blockIdx.x * blockDim.x + threadIdx.x;
-    //int p;
-    //for(int k=0; k<N; k++)
     VQ_VECTOR *TMP;
     //cu_dev_bn_usub(&A[i], &B[i], &C[i]);
     //cu_dev_bn_lshift(&C[i], 4);
     TMP = cu_dev_euclid(&A[i], &B[i]);
-    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
-    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[1]);
-    C[0] = *TMP;
-
-    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , cu_dev_euclid(&A[i], &B[i])->d[1]);
-    //p = cu_dev_bn_usub(dev_A[i], dev_B[i], dev_C[i]);
-    //cuPrintf("testKernel: %d\n", p);
+    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
+    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[1]);
+    C[i] = *TMP;
 }
 
 int main(void){
     int L = 5, //.Data length
-        N = 1;
+        N = 100;
 
     unit_test(); //check all host bn functions
 
@@ -299,6 +293,7 @@ int main(void){
     C =   (VQ_VECTOR*)malloc(N*sizeof(VQ_VECTOR));
 
     for(int i=0; i<N; i++){
+        
         VQ_VECTOR a;
         VQ_VECTOR b;
         VQ_VECTOR c;
@@ -321,22 +316,15 @@ int main(void){
         A[i] = a;
         B[i] = b;
         C[i] = c;
+
+        cu_BN_dec2bn(&A[i], "858238501677248042531768818944");
+        cu_BN_dec2bn(&B[i], "8353015802438879251643065122143616");
     }
 
-    cu_BN_dec2bn(&A[0], "858238501677248042531768818944");
-    cu_BN_dec2bn(&B[0], "8353015802438879251643065122143616");
     L=A[0].top;
     L=B[0].top;
     L=C[0].top;
-    //Prinf of all the elements of A
-    /*for(int i=0; i<N; i++){
-        printf("\nA[%d]={", i);
-        for(int j=0; j<L; j++)
-            printf("%u ",A[i].d[j]);
-        printf("}\n");
-    }
-    printf("\n\n");*/
-    //I Allocate and Copy data from A to device_VQ_VECTORon the GPU memory
+
 
     cudaDeviceReset();
     cudaStatus = cudaMalloc((void**)&device_VQ_VECTOR_A, N*sizeof(VQ_VECTOR));    
@@ -346,7 +334,7 @@ int main(void){
     cudaStatus = cudaMemcpy(device_VQ_VECTOR_B, B, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
     cudaStatus = cudaMemcpy(device_VQ_VECTOR_C, C, N*sizeof(VQ_VECTOR), cudaMemcpyHostToDevice);
 
-    for(int i = 0; i != N; ++i) {
+    for(int i = 0; i < N; ++i) {
         unsigned long *out;
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, A[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
@@ -382,7 +370,7 @@ int main(void){
     cudaStatus = cudaMemcpy(C, device_VQ_VECTOR_C, N*sizeof(VQ_VECTOR), cudaMemcpyDeviceToHost);
 
 
-    for(int i = 0; i != N; ++i) {
+    for(int i = 0; i < N; ++i) {
         unsigned *array = (unsigned*)malloc(L*sizeof(unsigned));
         cudaMemcpy(array, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         A[i].d = array;
@@ -400,7 +388,9 @@ int main(void){
         return 1;
     }
 
-    printf("cuda_kernel result c[0]=%s\n", cu_bn_bn2hex(&C[0]));
+    for(int i=0; i<N; i++){
+        printf("cuda_kernel result c[%d]=%s\n", i, cu_bn_bn2hex(&C[i]));
+    }
 
     cudaFree(device_VQ_VECTOR_A);
     cudaFree(device_VQ_VECTOR_B);
