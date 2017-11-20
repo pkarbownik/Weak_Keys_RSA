@@ -2,6 +2,7 @@
 #define TEST_H
 
 #include "cuda_bignum.h"
+#include "files_manager.h"
 #include <assert.h>
 
 #define TRACE 1
@@ -39,4 +40,5 @@ void cu_bn_rshift1_test(void);
 void cu_BN_lshift_test(void);
 void cu_euclid_test(void);
 void bignum2u_bn_test(void);
+void get_u_bn_from_mod_PEM_test(void);
 #endif /* TEST_H */

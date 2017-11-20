@@ -277,7 +277,6 @@ int main(void){
         N = 100;
 
     unit_test(); //check all host bn functions
-    print_mod_from_pem_file("keys_and_messages/1.pem");
 
     U_BN   *A;
     U_BN   *device_U_BN_A;
@@ -285,6 +284,7 @@ int main(void){
     U_BN   *device_U_BN_B;
     U_BN   *C;
     U_BN   *device_U_BN_C;
+    char *tmp_path = NULL;
 
     cudaError_t cudaStatus;
 
@@ -317,8 +317,11 @@ int main(void){
         B[i] = b;
         C[i] = c;
 
-        cu_BN_dec2bn(&A[i], "858238501677248042531768818944");
-        cu_BN_dec2bn(&B[i], "8353015802438879251643065122143616");
+		asprintf(&tmp_path, "keys_and_messages/%d.pem", i);
+        //cu_BN_dec2bn(&A[i], "858238501677248042531768818944");
+        //cu_BN_dec2bn(&B[i], "8353015802438879251643065122143616");
+        get_u_bn_from_mod_PEM(tmp_path, &A[i]);
+        get_u_bn_from_mod_PEM(tmp_path, &B[i]);
     }
 
     L=A[0].top;
