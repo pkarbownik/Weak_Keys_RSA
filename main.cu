@@ -4,6 +4,9 @@
 #include "files_manager.h"
 //#include <openssl/bn.h>
 
+#define N 4950
+#define KEYS 100
+
 #if __CUDA_ARCH__ < 200     //Compute capability 1.x architectures
 #define CUPRINTF cuPrintf
 #else                       //Compute capability 2.x architectures
@@ -260,7 +263,7 @@ __device__ U_BN *cu_dev_euclid(U_BN *a, U_BN *b){
 
 }
 
-__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int N){
+__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C) {
     int i= blockIdx.x * blockDim.x + threadIdx.x;
     U_BN *TMP;
     //cu_dev_bn_usub(&A[i], &B[i], &C[i]);
@@ -273,8 +276,9 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int N){
 }
 
 int main(void){
-    int L = 5, //.Data length
-        N = 100;
+    int L = 5;
+    int i, j;
+    unsigned k = 0;
 
     unit_test(); //check all host bn functions
 
@@ -284,13 +288,15 @@ int main(void){
     U_BN   *device_U_BN_B;
     U_BN   *C;
     U_BN   *device_U_BN_C;
-    char *tmp_path = NULL;
+    U_BN   *PEMs;
+    char *tmp_path[KEYS];
 
     cudaError_t cudaStatus;
 
-    A =   (U_BN*)malloc(N*sizeof(U_BN));
-    B =   (U_BN*)malloc(N*sizeof(U_BN));
-    C =   (U_BN*)malloc(N*sizeof(U_BN));
+    A    = (U_BN*)malloc(N*sizeof(U_BN));
+    B    = (U_BN*)malloc(N*sizeof(U_BN));
+    C    = (U_BN*)malloc(N*sizeof(U_BN));
+    PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
 
     for(int i=0; i<N; i++){
 
@@ -317,12 +323,37 @@ int main(void){
         B[i] = b;
         C[i] = c;
 
-		asprintf(&tmp_path, "keys_and_messages/%d.pem", i);
-        //cu_BN_dec2bn(&A[i], "858238501677248042531768818944");
-        //cu_BN_dec2bn(&B[i], "8353015802438879251643065122143616");
-        get_u_bn_from_mod_PEM(tmp_path, &A[i]);
-        get_u_bn_from_mod_PEM(tmp_path, &B[i]);
+
+        cu_BN_dec2bn(&A[i], "858238501677248042531768818944");
+        cu_BN_dec2bn(&B[i], "8353015802438879251643065122143616");
     }
+
+    for(i=0; i<KEYS; i++){
+    	U_BN tmp;
+        tmp.d = (unsigned*)malloc(L*sizeof(unsigned));
+        tmp.top =   L;
+        for(int j=0; j<L; j++)
+            tmp.d[j]=0;
+        PEMs[i] = tmp;
+		asprintf(&tmp_path[i], "keys_and_messages/%d.pem", (i+1));
+		printf("i: %d: %s\n", i, tmp_path[i]);
+    	get_u_bn_from_mod_PEM(tmp_path[i], &PEMs[i]);
+    	//free(tmp_path[i]);
+    }
+
+
+	for(i=0; i<KEYS; i++){
+		for(j=(i+1); j<KEYS; j++, k++){
+			/*asprintf(&tmp_path, "keys_and_messages/%d.pem", i);
+			printf("i: %d j: %d: %s\n", i, j, tmp_path);
+	    	//get_u_bn_from_mod_PEM(tmp_path, &A[k]);
+			asprintf(&tmp_path, "keys_and_messages/%d.pem", j);
+	    	printf("i: %d j: %d: %s\n", i, j, tmp_path);
+	    	//get_u_bn_from_mod_PEM(tmp_path, &B[k]);
+	    	free(tmp_path);*/
+		}
+	}
+	printf("k: %d\n", k);
 
     L=A[0].top;
     L=B[0].top;
@@ -358,7 +389,7 @@ int main(void){
     }
 
     cudaPrintfInit();
-    testKernel<<<1,N>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, N);//to test and see on a sigle thread
+    testKernel<<<(N/512), 512>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C);//to test and see on a sigle thread
     cudaPrintfDisplay(stdout, true);
     cudaPrintfEnd();
 

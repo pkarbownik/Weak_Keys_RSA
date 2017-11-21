@@ -304,5 +304,6 @@ void get_u_bn_from_mod_PEM_test(void){
 	u_bn = cu_BN_new();
 	//assert( 1 == get_u_bn_from_mod_PEM("keys_and_messages/1.pem", u_bn));
 	//printf("from PEM file: %s\n", cu_bn_bn2hex(u_bn));
+	cu_BN_free(u_bn);
 	INFO("Test passed\n");
 }

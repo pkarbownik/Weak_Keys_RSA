@@ -33,6 +33,7 @@ int get_u_bn_from_mod_PEM(char * filePath, U_BN* bignum){
 
 	RSA* rsa = EVP_PKEY_get1_RSA(pPubKey);
 	bignum2u_bn(rsa->n, bignum);
+	fclose(pemFile);
 	//INFO("%s\n", cu_bn_bn2hex(bignum));
 	return (1);
 }
