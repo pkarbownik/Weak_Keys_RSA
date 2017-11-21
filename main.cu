@@ -336,25 +336,17 @@ int main(void){
             tmp.d[j]=0;
         PEMs[i] = tmp;
 		asprintf(&tmp_path[i], "keys_and_messages/%d.pem", (i+1));
-		printf("i: %d: %s\n", i, tmp_path[i]);
     	get_u_bn_from_mod_PEM(tmp_path[i], &PEMs[i]);
     	//free(tmp_path[i]);
     }
 
-
-	for(i=0; i<KEYS; i++){
+	for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
-			/*asprintf(&tmp_path, "keys_and_messages/%d.pem", i);
-			printf("i: %d j: %d: %s\n", i, j, tmp_path);
-	    	//get_u_bn_from_mod_PEM(tmp_path, &A[k]);
-			asprintf(&tmp_path, "keys_and_messages/%d.pem", j);
-	    	printf("i: %d j: %d: %s\n", i, j, tmp_path);
-	    	//get_u_bn_from_mod_PEM(tmp_path, &B[k]);
-	    	free(tmp_path);*/
+			A[k] = PEMs[i];
+			B[k] = PEMs[j];
 		}
 	}
 	printf("k: %d\n", k);
-
     L=A[0].top;
     L=B[0].top;
     L=C[0].top;
@@ -422,9 +414,12 @@ int main(void){
         return 1;
     }
 
-    for(int i=0; i<N; i++){
-        printf("cuda_kernel result c[%d]=%s\n", i, cu_bn_bn2hex(&C[i]));
-    }
+	for(i=0, k=0; i<KEYS; i++){
+		for(j=(i+1); j<KEYS; j++, k++){
+			if( strcmp( "1", cu_bn_bn2hex(&C[k]) ) )
+				printf("i: %d, j: %d, C[%d]: %s \n", j, i, k, cu_bn_bn2hex(&C[k]));
+		}
+	}
 
     cudaFree(device_U_BN_A);
     cudaFree(device_U_BN_B);
