@@ -270,26 +270,26 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C) {
     //cu_dev_bn_lshift(&C[i], 4);
     
     TMP = cu_dev_euclid(&A[i], &B[i]);
-    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
+    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[1]);
     C[i] = *TMP;
 }
 
 int main(void){
-    int L = 5;
+    int L = 20;
     int i, j;
     unsigned k = 0;
 
     unit_test(); //check all host bn functions
 
-    U_BN   *A;
+   /* U_BN   *A;
     U_BN   *device_U_BN_A;
     U_BN   *B;
     U_BN   *device_U_BN_B;
     U_BN   *C;
     U_BN   *device_U_BN_C;
     U_BN   *PEMs;
-    char *tmp_path[KEYS];
+    char *tmp_path;
 
     cudaError_t cudaStatus;
 
@@ -297,7 +297,6 @@ int main(void){
     B    = (U_BN*)malloc(N*sizeof(U_BN));
     C    = (U_BN*)malloc(N*sizeof(U_BN));
     PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
-
     for(int i=0; i<N; i++){
 
         U_BN a;
@@ -324,21 +323,39 @@ int main(void){
         C[i] = c;
 
 
-        cu_BN_dec2bn(&A[i], "858238501677248042531768818944");
-        cu_BN_dec2bn(&B[i], "8353015802438879251643065122143616");
+        cu_BN_dec2bn(&A[i], "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171722437841965806707802420698885993409903878055377635362821711101383838163609674216891593551006179966415573764558448444491910741");
+        cu_BN_dec2bn(&B[i], "153742888927315127887885897710409075716211633799451988849586912183040661976013485662179185912863960986042381874152387899078840914799060228817626105036203955806632203084398387337032902923418896729210533405678152726254846362044967057520288405432841264268074502333015282782591635733346474614347690244527824959283");
     }
 
-    for(i=0; i<KEYS; i++){
-    	U_BN tmp;
-        tmp.d = (unsigned*)malloc(L*sizeof(unsigned));
-        tmp.top =   L;
-        for(int j=0; j<L; j++)
-            tmp.d[j]=0;
-        PEMs[i] = tmp;
-		asprintf(&tmp_path[i], "keys_and_messages/%d.pem", (i+1));
-    	get_u_bn_from_mod_PEM(tmp_path[i], &PEMs[i]);
-    	//free(tmp_path[i]);
+    U_BN tmp;
+    EVP_PKEY* pPubKey  = NULL;
+    FILE*     pemFile    = NULL;
+    RSA* rsa;
+
+    tmp.d = (unsigned*)malloc(L*sizeof(unsigned));
+    tmp.top = L;
+    for(int j=0; j<L; j++){
+        tmp.d[j]=0;
     }
+
+   	for(i=0; i<KEYS; i++){
+        PEMs[i] = tmp;
+		asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
+    	get_u_bn_from_mod_PEM(tmp_path, &PEMs[i]);
+        printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&PEMs[i]));
+
+        if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
+            fprintf(stderr,"Cannot read \"public key\".\n");
+        }
+
+        rsa = EVP_PKEY_get1_RSA(pPubKey);
+        printf( "PEM[%d]: %s\n", i, BN_bn2hex(rsa->n));
+        fclose(pemFile);
+        	//BN_dec2bn(&PEMs_ssl[i], tmp_path);
+    }
+
+    free(tmp.d);
+
 
 	for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
@@ -346,10 +363,19 @@ int main(void){
 			B[k] = PEMs[j];
 		}
 	}
+
+
+    for(i=0, k=0; i<KEYS; i++){
+		for(j=(i+1); j<KEYS; j++, k++){
+			//if( strcmp( "1", cu_bn_bn2hex( cu_euclid(&A[i], &B[i]) ) ) )
+				//printf( "i: %d, j: %d\nA[%d]: %s\nB[%d]: %s \n", i, j, k, cu_bn_bn2hex(&A[k]), k, cu_bn_bn2hex(&B[k]) );
+		}
+	}
+
 	printf("k: %d\n", k);
-    L=A[0].top;
-    L=B[0].top;
-    L=C[0].top;
+    //L=A[0].top;
+    //L=B[0].top;
+    //L=C[0].top;
 
 
     cudaDeviceReset();
@@ -360,24 +386,24 @@ int main(void){
     cudaStatus = cudaMemcpy(device_U_BN_B, B, N*sizeof(U_BN), cudaMemcpyHostToDevice);
     cudaStatus = cudaMemcpy(device_U_BN_C, C, N*sizeof(U_BN), cudaMemcpyHostToDevice);
 
+	unsigned long *out;
+
     for(int i = 0; i < N; ++i) {
-        unsigned long *out;
+
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, A[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
         cudaMemcpy(&device_U_BN_A[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
-
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, B[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
         cudaMemcpy(&device_U_BN_B[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
-
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, C[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
         cudaMemcpy(&device_U_BN_C[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
-
         // will re-allocate later, for simplicity sake
-        free(A[i].d);
-        free(B[i].d);
-        free(C[i].d);
+        //free(A[i].d);
+        //free(B[i].d);
+        //free(C[i].d);
+
     }
 
     cudaPrintfInit();
@@ -395,9 +421,10 @@ int main(void){
     cudaStatus = cudaMemcpy(B, device_U_BN_B, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
     cudaStatus = cudaMemcpy(C, device_U_BN_C, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
 
+    unsigned *array = (unsigned*)malloc(L*sizeof(unsigned));
 
     for(int i = 0; i < N; ++i) {
-        unsigned *array = (unsigned*)malloc(L*sizeof(unsigned));
+		array = (unsigned*)malloc(L*sizeof(unsigned));
         cudaMemcpy(array, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         A[i].d = array;
 
@@ -406,6 +433,7 @@ int main(void){
 
         cudaMemcpy(array, C[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         C[i].d = array;
+
     }
 
     cudaStatus = cudaGetLastError();
@@ -420,9 +448,10 @@ int main(void){
 				printf("i: %d, j: %d, C[%d]: %s \n", j, i, k, cu_bn_bn2hex(&C[k]));
 		}
 	}
-
+    cudaFree(out);
+	free(array);
     cudaFree(device_U_BN_A);
     cudaFree(device_U_BN_B);
-    cudaFree(device_U_BN_C);
-    return 0;
+    cudaFree(device_U_BN_C);*/
+    return (0);
 }

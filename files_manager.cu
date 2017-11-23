@@ -25,15 +25,19 @@ int get_u_bn_from_mod_PEM(char * filePath, U_BN* bignum){
 
 	EVP_PKEY* pPubKey  = NULL;
     FILE*     pemFile    = NULL;
+    RSA* rsa;
 
 	if( !( (pemFile = fopen(filePath, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
         fprintf(stderr,"Cannot read \"public key\".\n");
         return 0;
 	}
 
-	RSA* rsa = EVP_PKEY_get1_RSA(pPubKey);
+	rsa = EVP_PKEY_get1_RSA(pPubKey);
 	bignum2u_bn(rsa->n, bignum);
+    //printf( "PEM: %s\n", BN_bn2hex(rsa->n));
+    //printf( "PEM_cu: %s\n", cu_bn_bn2hex(bignum));
 	fclose(pemFile);
-	//INFO("%s\n", cu_bn_bn2hex(bignum));
+	//printf("%s\n", cu_bn_bn2hex(bignum));
 	return (1);
 }
+

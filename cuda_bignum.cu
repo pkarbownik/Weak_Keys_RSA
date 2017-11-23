@@ -668,8 +668,9 @@ int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn){
     if(NULL == u_bn->d)
         return 0;
 
-    u_bn->d = (unsigned *) malloc ( sizeof(bignum->d[0]) * (bignum->top+1) );
-    memcpy(u_bn->d, bignum->d, sizeof(bignum->d[0]) * (bignum->top+1));
-    u_bn->top = (bignum->top+1);
+    u_bn->top = ( (2 * bignum->top) + 1);
+    u_bn->d = (unsigned *) malloc ( sizeof(unsigned) * u_bn->top );
+    memcpy(u_bn->d, bignum->d, ( sizeof(unsigned) * u_bn->top ));
+
     return (1);
 }
