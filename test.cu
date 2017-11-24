@@ -13,17 +13,17 @@ void unit_test(void){
 	cu_BN_bn2hex_test();
 	cu_BN_ucmp_test();
 	cu_long_abs_test();
-	cu_bn_usub_test();
+	//cu_bn_usub_test();
 	cu_bn_num_bits_word_test();
 	cu_bn_num_bits_test();
-	string_num_add_test();
+	//string_num_add_test();
 	number_of_digits_test();
-	long2string_test();
-	string_num_add_long_test();
+	//long2string_test();
+	//string_num_add_long_test();
 	cu_bn_rshift1_test();
-	cu_BN_lshift_test();
+	//cu_BN_lshift_test();
 	cu_euclid_test();
-	bignum2u_bn_test();
+	//bignum2u_bn_test();
 	get_u_bn_from_mod_PEM_test();
 	INFO("tests completed\n");
 }
@@ -172,11 +172,12 @@ void cu_long_abs_test(void){
 
 
 void cu_bn_usub_test(void){
-	U_BN   *A = NULL, *B = NULL, *C = NULL;
+	U_BN   *A = NULL, *B = NULL;
+	U_BN   *C = NULL;
 	A = cu_BN_new();
 	B = cu_BN_new();
 	C = cu_BN_new();
-	cu_BN_dec2bn(A, "184876476346363755645778788");
+	cu_BN_dec2bn(A, "1848764763463763755645778788");
 	cu_BN_dec2bn(B, "184876476346363755644778788");
 	assert(1 == cu_bn_usub(A, B, C));
 	assert(!strcmp("F4240", cu_bn_bn2hex(C)));

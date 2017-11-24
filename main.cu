@@ -282,13 +282,14 @@ int main(void){
 
     unit_test(); //check all host bn functions
 
-   /* U_BN   *A;
+    U_BN   *A;
     U_BN   *device_U_BN_A;
     U_BN   *B;
     U_BN   *device_U_BN_B;
     U_BN   *C;
     U_BN   *device_U_BN_C;
-    U_BN   *PEMs;
+    U_BN   *cu_PEMs;
+    BIGNUM   *PEMs;
     char *tmp_path;
 
     cudaError_t cudaStatus;
@@ -296,7 +297,8 @@ int main(void){
     A    = (U_BN*)malloc(N*sizeof(U_BN));
     B    = (U_BN*)malloc(N*sizeof(U_BN));
     C    = (U_BN*)malloc(N*sizeof(U_BN));
-    PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
+    cu_PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
+    PEMs = (BIGNUM*)malloc(KEYS*sizeof(BIGNUM));
     for(int i=0; i<N; i++){
 
         U_BN a;
@@ -339,10 +341,10 @@ int main(void){
     }
 
    	for(i=0; i<KEYS; i++){
-        PEMs[i] = tmp;
+        cu_PEMs[i] = tmp;
 		asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
-    	get_u_bn_from_mod_PEM(tmp_path, &PEMs[i]);
-        printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&PEMs[i]));
+    	get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
+        printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
 
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
             fprintf(stderr,"Cannot read \"public key\".\n");
@@ -350,8 +352,9 @@ int main(void){
 
         rsa = EVP_PKEY_get1_RSA(pPubKey);
         printf( "PEM[%d]: %s\n", i, BN_bn2hex(rsa->n));
+        PEMs[i] = *(rsa->n);
         fclose(pemFile);
-        	//BN_dec2bn(&PEMs_ssl[i], tmp_path);
+        	//BN_dec2bn(&cu_PEMs_ssl[i], tmp_path);
     }
 
     free(tmp.d);
@@ -359,19 +362,26 @@ int main(void){
 
 	for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
-			A[k] = PEMs[i];
-			B[k] = PEMs[j];
+			A[k] = cu_PEMs[i];
+			B[k] = cu_PEMs[j];
 		}
 	}
 
-
+    BN_CTX *ctx;
+    ctx = BN_CTX_new();
+    BIGNUM *r;
+    r=BN_new();
     for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
-			//if( strcmp( "1", cu_bn_bn2hex( cu_euclid(&A[i], &B[i]) ) ) )
-				//printf( "i: %d, j: %d\nA[%d]: %s\nB[%d]: %s \n", i, j, k, cu_bn_bn2hex(&A[k]), k, cu_bn_bn2hex(&B[k]) );
-		}
-	}
 
+            BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
+                if(!BN_is_one(r)){
+    				printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
+                }   
+		    }
+	}
+    BN_CTX_free(ctx);
+    BN_free(r);
 	printf("k: %d\n", k);
     //L=A[0].top;
     //L=B[0].top;
@@ -452,6 +462,6 @@ int main(void){
 	free(array);
     cudaFree(device_U_BN_A);
     cudaFree(device_U_BN_B);
-    cudaFree(device_U_BN_C);*/
+    cudaFree(device_U_BN_C);
     return (0);
 }
