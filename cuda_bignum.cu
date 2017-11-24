@@ -554,41 +554,41 @@ int cu_BN_lshift(U_BN *a, unsigned n){
     unsigned nwb = 0, c = 0;
 
     nw = (n / CU_BN_BITS2);
-    DEBUG_PRINT("nw: %u\n", nw);
+    //DEBUG_PRINT("nw: %u\n", nw);
     lb = (n % CU_BN_BITS2);
-    DEBUG_PRINT("lb: %u\n", lb);
+    //DEBUG_PRINT("lb: %u\n", lb);
     rb = (CU_BN_BITS2 - lb);
-    DEBUG_PRINT("rb: %u\n", rb);
+    //DEBUG_PRINT("rb: %u\n", rb);
 
     l=a->d[a->top-1];
     if( (l >> rb) > 0 ) nwb = 1;
 
     if(nw || nwb){
         //a->d = (unsigned*)realloc(a->d, (a->top + nw + nwb)*sizeof(unsigned)) ;
-        a->d[a->top]=0;
+        //a->d[a->top]=0;
         //memset((a->d+a->top-1), 0, (nw + nwb));
         //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
-    DEBUG_PRINT("nwb: %u\n", nwb);
+    //DEBUG_PRINT("nwb: %u\n", nwb);
 
     if (lb == 0 && nw != 0 ){
         for (i = a->top - 1; i >= 0; i--){
             a->d[nw + i] = a->d[i];
-            DEBUG_PRINT("a->d[nw + i]: %u\n", a->d[nw + i]);
+            //DEBUG_PRINT("a->d[nw + i]: %u\n", a->d[nw + i]);
         }
     } else {
         for (i = 0; i < (a->top + nw + nwb); i++) {
             l = a->d[i];
-            DEBUG_PRINT("l = a->d[%d]: %u\n", i, l);
+            //DEBUG_PRINT("l = a->d[%d]: %u\n", i, l);
             a->d[i] = (l << lb) | c;
             c = (l >> rb);
-            DEBUG_PRINT("after lshift a->d[%d]: %u\n", i, a->d[i]);
+            //DEBUG_PRINT("after lshift a->d[%d]: %u\n", i, a->d[i]);
 
         }
 
     }
     a->top += (nw + nwb);
-    DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
+    //DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
     return (1);
 
 }
@@ -596,6 +596,13 @@ int cu_BN_lshift(U_BN *a, unsigned n){
 U_BN *cu_euclid(U_BN *a, U_BN *b){
 
     U_BN *t = NULL;
+
+    if (cu_BN_ucmp(a, b) < 0) {
+        t = a;
+        a = b;
+        b = t;
+    }
+
     unsigned shifts = 0;
     while (!CU_BN_is_zero(b)) {
         if (cu_BN_is_odd(a)) {
@@ -640,7 +647,6 @@ U_BN *cu_euclid(U_BN *a, U_BN *b){
                 shifts++;
             }
         }
-        DEBUG_PRINT("\n");
     }
 
     if (shifts) {

@@ -4,7 +4,7 @@
 #include "files_manager.h"
 //#include <openssl/bn.h>
 
-#define N 4950
+#define N 100
 #define KEYS 100
 
 #if __CUDA_ARCH__ < 200     //Compute capability 1.x architectures
@@ -270,7 +270,7 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C) {
     //cu_dev_bn_lshift(&C[i], 4);
     
     TMP = cu_dev_euclid(&A[i], &B[i]);
-    CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
+    //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[1]);
     C[i] = *TMP;
 }
@@ -282,7 +282,7 @@ int main(void){
 
     unit_test(); //check all host bn functions
 
-    U_BN   *A;
+/*    U_BN   *A;
     U_BN   *device_U_BN_A;
     U_BN   *B;
     U_BN   *device_U_BN_B;
@@ -325,8 +325,8 @@ int main(void){
         C[i] = c;
 
 
-        cu_BN_dec2bn(&A[i], "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171722437841965806707802420698885993409903878055377635362821711101383838163609674216891593551006179966415573764558448444491910741");
-        cu_BN_dec2bn(&B[i], "153742888927315127887885897710409075716211633799451988849586912183040661976013485662179185912863960986042381874152387899078840914799060228817626105036203955806632203084398387337032902923418896729210533405678152726254846362044967057520288405432841264268074502333015282782591635733346474614347690244527824959283");
+        cu_BN_dec2bn(&A[i], "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703");
+        cu_BN_dec2bn(&B[i], "153163191350080004753719541878639679925751357102438057067765648153494919820492752406541777993818669543828409108573301561909800888007187281238501993216174635844061745211925344459533697417725388852473562049060767974408923513912739719270896424056397302060207737757214092400193658968266656005842604773523194251451");
     }
 
     U_BN tmp;
@@ -344,14 +344,14 @@ int main(void){
         cu_PEMs[i] = tmp;
 		asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
     	get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
-        printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
+        //printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
 
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
             fprintf(stderr,"Cannot read \"public key\".\n");
         }
 
         rsa = EVP_PKEY_get1_RSA(pPubKey);
-        printf( "PEM[%d]: %s\n", i, BN_bn2hex(rsa->n));
+        //printf( "PEM[%d]: %s\n", i, BN_bn2hex(rsa->n));
         PEMs[i] = *(rsa->n);
         fclose(pemFile);
         	//BN_dec2bn(&cu_PEMs_ssl[i], tmp_path);
@@ -373,7 +373,6 @@ int main(void){
     r=BN_new();
     for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
-
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
                 if(!BN_is_one(r)){
     				printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
@@ -462,6 +461,6 @@ int main(void){
 	free(array);
     cudaFree(device_U_BN_A);
     cudaFree(device_U_BN_B);
-    cudaFree(device_U_BN_C);
+    cudaFree(device_U_BN_C);*/
     return (0);
 }
