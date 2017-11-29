@@ -4,8 +4,9 @@
 #include "files_manager.h"
 //#include <openssl/bn.h>
 
-#define N 100
+#define N 4950
 #define KEYS 100
+#define THREADS_PER_BLOCK 512
 
 #if __CUDA_ARCH__ < 200     //Compute capability 1.x architectures
 #define CUPRINTF cuPrintf
@@ -19,7 +20,7 @@
 #define MAIN_COMPUTATIONS 1
 
 
-__device__ int cu_dev_BN_ucmp(const U_BN *a, const U_BN *b){
+__host__ __device__ int cu_dev_BN_ucmp(const U_BN *a, const U_BN *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -39,7 +40,7 @@ __device__ int cu_dev_BN_ucmp(const U_BN *a, const U_BN *b){
 
 }
 
-__device__ long cu_dev_long_abs(long number){
+__host__ __device__ long cu_dev_long_abs(long number){
 
     if(number<0)
         return -number;
@@ -48,7 +49,7 @@ __device__ long cu_dev_long_abs(long number){
 
 }
 
-__device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
+__host__ __device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
 
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
@@ -134,7 +135,7 @@ __device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
 }
 
 
-__device__ int cu_dev_bn_rshift1(U_BN *a){
+__host__ __device__ int cu_dev_bn_rshift1(U_BN *a){
 
 
     if(NULL == a)
@@ -169,7 +170,7 @@ __device__ int cu_dev_bn_rshift1(U_BN *a){
 
 }
 
-__device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
+__host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
 
     if(NULL == a)
         return 0;
@@ -195,7 +196,7 @@ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
     if( (l >> rb) > 0 ) nwb = 1;
     if(nw || nwb){
         //a->d = (unsigned*)realloc(a->d, (a->top + nw + nwb)*sizeof(unsigned)) ;
-        a->d[a->top]=0;
+        //a->d[a->top]=0;
         //memset((a->d+a->top-1), 0, (nw + nwb));
         //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
@@ -219,9 +220,16 @@ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
 }
 
 
-__device__ U_BN *cu_dev_euclid(U_BN *a, U_BN *b){
+__host__ __device__ U_BN *cu_dev_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     unsigned shifts = 0;
+
+    if (cu_dev_BN_ucmp(a, b) < 0) {
+        t = a;
+        a = b;
+        b = t;
+    }
+
     while (!CU_BN_is_zero(b)) {
         if (cu_BN_is_odd(a)) {
             if (cu_BN_is_odd(b)) {
@@ -263,26 +271,54 @@ __device__ U_BN *cu_dev_euclid(U_BN *a, U_BN *b){
 
 }
 
-__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C) {
+
+__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
     int i= blockIdx.x * blockDim.x + threadIdx.x;
-    U_BN *TMP;
+    //char Hex[] = "0123456789ABCDEF";
+
+    U_BN *TMP=NULL;
+    //int l;
     //cu_dev_bn_usub(&A[i], &B[i], &C[i]);
     //cu_dev_bn_lshift(&C[i], 4);
     
-    TMP = cu_dev_euclid(&A[i], &B[i]);
+    //TMP = cu_dev_euclid(&A[i], &B[i]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[0]);
     //CUPRINTF("testKernel entrance by the global threadIdx= %d value: %u\n", i , TMP->d[1]);
-    C[i] = *TMP;
+    //C[i] = *TMP;
+
+    //int k, j, v, z = 0;
+
+
+
+
+    if(i<n){
+        //for(l=0; l<A->top; l++){
+        //    cu_dev_bn_usub(&A[i], &B[i], &C[i]);
+        //}
+        TMP = cu_dev_euclid(&A[i], &B[i]);
+        C[i] = *TMP;
+        /*for (k = A[i].top - 1; k >= 0; k--) {
+            for (j = CU_BN_BITS2 - 4; j >= 0; j -= 4) {
+                v = ((unsigned)(A[i].d[k] >> j)) & 0x0f;
+                if (z || (v != 0)) {
+                    CUPRINTF("%c\n",(Hex[v & 0x0f]));
+                    z = 1;
+                }
+            }
+        }
+        CUPRINTF("top: %u\n", A[i].top);*/
+    }
 }
 
 int main(void){
-    int L = 20;
+    int L = 35;
     int i, j;
     unsigned k = 0;
+    unsigned n = N;
 
     unit_test(); //check all host bn functions
 
-/*    U_BN   *A;
+    U_BN   *A;
     U_BN   *device_U_BN_A;
     U_BN   *B;
     U_BN   *device_U_BN_B;
@@ -299,6 +335,7 @@ int main(void){
     C    = (U_BN*)malloc(N*sizeof(U_BN));
     cu_PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
     PEMs = (BIGNUM*)malloc(KEYS*sizeof(BIGNUM));
+
     for(int i=0; i<N; i++){
 
         U_BN a;
@@ -325,8 +362,9 @@ int main(void){
         C[i] = c;
 
 
-        cu_BN_dec2bn(&A[i], "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703");
-        cu_BN_dec2bn(&B[i], "153163191350080004753719541878639679925751357102438057067765648153494919820492752406541777993818669543828409108573301561909800888007187281238501993216174635844061745211925344459533697417725388852473562049060767974408923513912739719270896424056397302060207737757214092400193658968266656005842604773523194251451");
+        cu_BN_dec2bn(&A[i], "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081");
+        cu_BN_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
+        //cu_BN_dec2bn(&C[i], "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825700");
     }
 
     U_BN tmp;
@@ -336,6 +374,7 @@ int main(void){
 
     tmp.d = (unsigned*)malloc(L*sizeof(unsigned));
     tmp.top = L;
+
     for(int j=0; j<L; j++){
         tmp.d[j]=0;
     }
@@ -344,6 +383,7 @@ int main(void){
         cu_PEMs[i] = tmp;
 		asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
     	get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
+
         //printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
 
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
@@ -351,7 +391,7 @@ int main(void){
         }
 
         rsa = EVP_PKEY_get1_RSA(pPubKey);
-        //printf( "PEM[%d]: %s\n", i, BN_bn2hex(rsa->n));
+        //printf( "PEM[%d]: %s\n", i, BN_bn2dec(rsa->n));
         PEMs[i] = *(rsa->n);
         fclose(pemFile);
         	//BN_dec2bn(&cu_PEMs_ssl[i], tmp_path);
@@ -374,11 +414,12 @@ int main(void){
     for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
-                if(!BN_is_one(r)){
-    				printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
-                }   
-		    }
+            if(!BN_is_one(r)){
+    			//printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\neuclid_dev_cu: %s\n\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r), cu_bn_bn2hex(cu_dev_euclid(&A[k], &B[k])));
+            }   
+		}
 	}
+    
     BN_CTX_free(ctx);
     BN_free(r);
 	printf("k: %d\n", k);
@@ -416,7 +457,8 @@ int main(void){
     }
 
     cudaPrintfInit();
-    testKernel<<<(N/512), 512>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C);//to test and see on a sigle thread
+    testKernel<<<((N + THREADS_PER_BLOCK -1)/THREADS_PER_BLOCK), THREADS_PER_BLOCK>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, n);//to test and see on a sigle thread
+    cudaDeviceSynchronize();
     cudaPrintfDisplay(stdout, true);
     cudaPrintfEnd();
 
@@ -453,14 +495,15 @@ int main(void){
 
 	for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
-			if( strcmp( "1", cu_bn_bn2hex(&C[k]) ) )
-				printf("i: %d, j: %d, C[%d]: %s \n", j, i, k, cu_bn_bn2hex(&C[k]));
+			if( strcmp( "1", cu_bn_bn2hex(&C[k]))){
+				printf("i: %d, j: %d, C[%d]: %s\n", j, i, k, cu_bn_bn2hex(&C[k]));
+            }
 		}
 	}
     cudaFree(out);
 	free(array);
     cudaFree(device_U_BN_A);
     cudaFree(device_U_BN_B);
-    cudaFree(device_U_BN_C);*/
+    cudaFree(device_U_BN_C);
     return (0);
 }
