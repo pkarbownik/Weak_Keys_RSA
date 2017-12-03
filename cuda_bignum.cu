@@ -680,3 +680,35 @@ int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn){
 
     return (1);
 }
+
+U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b){
+    U_BN *t = NULL;
+    do {
+        cu_bn_usub(a, b, a);
+        cu_BN_rshift1(a);
+        if (cu_BN_ucmp(a, b) < 0) {
+            t = a;
+            a = b;
+            b = t;
+        }
+    } while (!CU_BN_is_zero(b));
+
+    return (a);
+
+}
+
+U_BN *cu_classic_euclid(U_BN *a, U_BN *b){
+
+    while (cu_BN_ucmp(a, b) != 0) {
+        if (cu_BN_ucmp(a, b) > 0) {
+            cu_bn_usub(a, b, a); 
+        }
+        else {
+            cu_bn_usub(b, a, b);
+        }
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
+    }
+
+    return (a);
+
+}

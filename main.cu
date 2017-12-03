@@ -213,7 +213,7 @@ __host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
 }
 
 
-__host__ __device__ U_BN *cu_dev_euclid(U_BN *a, U_BN *b){
+__host__ __device__ U_BN *cu_dev_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     unsigned shifts = 0;
 
@@ -260,6 +260,38 @@ __host__ __device__ U_BN *cu_dev_euclid(U_BN *a, U_BN *b){
     if (shifts) {
         cu_dev_bn_lshift(a, shifts);
     }
+    return (a);
+
+}
+
+
+__host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
+    U_BN *t = NULL;
+    do {
+        cu_dev_bn_usub(a, b, a);
+        cu_dev_bn_rshift1(a);
+        if (cu_dev_BN_ucmp(a, b) < 0) {
+            t = a;
+            a = b;
+            b = t;
+        }
+    } while (!CU_BN_is_zero(b));
+
+    return (a);
+
+}
+
+__host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
+
+    while (cu_dev_BN_ucmp(a, b) != 0) {
+        if (cu_dev_BN_ucmp(a, b) > 0) {
+            cu_dev_bn_usub(a, b, a); 
+        }
+        else {
+            cu_dev_bn_usub(b, a, b);
+        }
+    }
+
     return (a);
 
 }
@@ -322,7 +354,11 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
     U_BN *TMP=NULL;
 
     if(i<n){
-        TMP = cu_dev_euclid(&A[i], &B[i]);
+        //cu_dev_bn_rshift1(&A[i]);
+        //cu_dev_bn_lshift(&A[i], 1);
+        //cu_dev_bn_usub(&A[i],&B[i],TMP);
+        //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        TMP = cu_dev_classic_euclid(&A[i], &B[i]);
         C[i] = *TMP;
     }
 }

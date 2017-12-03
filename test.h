@@ -41,4 +41,6 @@ void cu_BN_lshift_test(void);
 void cu_euclid_test(void);
 void bignum2u_bn_test(void);
 void get_u_bn_from_mod_PEM_test(void);
+void cu_fast_binary_euclid_test(void);
+void cu_classic_euclid_test(void);
 #endif /* TEST_H */

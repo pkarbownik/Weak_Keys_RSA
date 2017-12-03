@@ -95,4 +95,6 @@ int cu_BN_rshift1(U_BN *a);
 int cu_BN_lshift(U_BN *a, unsigned n);
 U_BN *cu_euclid(U_BN *a, U_BN *b);
 int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn);
+U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b);
+U_BN *cu_classic_euclid(U_BN *a, U_BN *b);
 #endif /* CUDA_BIGNUM_H */
