@@ -304,9 +304,12 @@ void cu_euclid_test(void){
     BN_CTX_free(ctx);
 
 
-
+    clock_t start = clock();
     A = cu_euclid(A, B);
-
+    clock_t stop = clock();
+    double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
+    INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
+    
 	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
 	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));
 	//cu_BN_free(A);
@@ -340,8 +343,11 @@ void cu_fast_binary_euclid_test(void){
     BN_CTX_free(ctx);
 
 
-
+    clock_t start = clock();
     A = cu_fast_binary_euclid(A, B);
+    clock_t stop = clock();
+    double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
+    INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
 
 	INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
 	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));
@@ -376,9 +382,11 @@ void cu_classic_euclid_test(void){
     BN_CTX_free(ctx);
 
 
-
+    clock_t start = clock();
     A = cu_classic_euclid(A, B);
-
+    clock_t stop = clock();
+    double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
+    INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
 	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
 	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));	
 	BN_free(A_bn);

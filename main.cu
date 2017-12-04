@@ -5,7 +5,7 @@
 #include <time.h>
 //#include <openssl/bn.h>
 
-#define N 10000
+#define N 4950
 #define KEYS 100
 #define THREADS_PER_BLOCK 512
 
@@ -298,28 +298,24 @@ __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
 
 void CPU_computation(void){
 
-    U_BN tmp;
     BIGNUM *r;
     BN_CTX *ctx;
     EVP_PKEY* pPubKey  = NULL;
     FILE*     pemFile    = NULL;
     RSA* rsa;
-    int L = 35, i, j;
+    int i, j;
     unsigned k = 0;
     BIGNUM   *PEMs;
     char *tmp_path;
 
     PEMs = (BIGNUM*)malloc(KEYS*sizeof(BIGNUM));
-    tmp.d = (unsigned*)malloc(L*sizeof(unsigned));
-    tmp.top = L;
 
-    for(j=0; j<L; j++){
-        tmp.d[j]=0;
-    }
 
     for(i=0; i<KEYS; i++){
 
-        asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
+        //asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
+        asprintf(&tmp_path, "keys/%d.pem", (i+1));
+        
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
             fprintf(stderr,"Cannot read \"public key\".\n");
         }
@@ -329,16 +325,15 @@ void CPU_computation(void){
 
     }
 
-    free(tmp.d);
     ctx = BN_CTX_new();
     r=BN_new();
     clock_t start = clock();
     for(i=0, k=0; i<KEYS; i++){
         for(j=(i+1); j<KEYS; j++, k++){
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
-            if(!BN_is_one(r)){
+            /*if(!BN_is_one(r)){
                 printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
-            }
+            }*/
         }
     }
     clock_t stop = clock();
@@ -352,21 +347,22 @@ void CPU_computation(void){
 __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
     int i= blockIdx.x * blockDim.x + threadIdx.x;
     U_BN *TMP=NULL;
-
     if(i<n){
         //cu_dev_bn_rshift1(&A[i]);
         //cu_dev_bn_lshift(&A[i], 1);
         //cu_dev_bn_usub(&A[i],&B[i],TMP);
-        //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
-        TMP = cu_dev_classic_euclid(&A[i], &B[i]);
+        TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
         C[i] = *TMP;
     }
+    //else
+    //    cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
 }
 
 int main(void){
 
     U_BN tmp;
-    int L = 35;
+    int L = 128;
     unsigned i, j;
     unsigned k = 0, n = N;
     U_BN   *A, *B, *C;
@@ -375,80 +371,51 @@ int main(void){
     char *tmp_path;
     cudaError_t cudaStatus;
 
-    unit_test();
-    //CPU_computation();
+    //unit_test();
+    CPU_computation();
 
     A    = (U_BN*)malloc(N*sizeof(U_BN));
     B    = (U_BN*)malloc(N*sizeof(U_BN));
     C    = (U_BN*)malloc(N*sizeof(U_BN));
     cu_PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
-
+        
     for(i=0; i<N; i++){
 
         U_BN a;
-        U_BN b;
-        U_BN c;
+
         a.d = (unsigned*)malloc(L*sizeof(unsigned));
-        b.d = (unsigned*)malloc(L*sizeof(unsigned));
-        c.d = (unsigned*)malloc(L*sizeof(unsigned));
+
         a.top =   L;
-        b.top =   L;
-        c.top =   L;
 
         for(j=0; j<L; j++)
             a.d[j]=0;
 
-        for(j=0; j<L; j++)
-            b.d[j]=0;
-
-        for(j=0; j<L; j++)
-            c.d[j]=0;
-
         A[i] = a;
-        B[i] = b;
-        C[i] = c;
+        B[i] = a;
+        C[i] = a;
 
-        cu_BN_dec2bn(&A[i], "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081");
-        cu_BN_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
+        //cu_BN_dec2bn(&A[i], "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081");
+        //cu_BN_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
     }
 
-    /*for(i=0; i<KEYS; i++){
+    for(i=0; i<KEYS; i++){
         cu_PEMs[i] = tmp;
-        asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
+        asprintf(&tmp_path, "keys/%d.pem", (i+1));
         get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
         //printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
     }
 
     for(i=0, k=0; i<KEYS; i++){
         for(j=(i+1); j<KEYS; j++, k++){
-            A[k] = cu_PEMs[i];
-            B[k] = cu_PEMs[j];
+            A[k].top = cu_PEMs[i].top;
+            memcpy(A[k].d, cu_PEMs[i].d, ( sizeof(unsigned) * cu_PEMs[i].top ));
+            B[k].top = cu_PEMs[j].top;
+            memcpy(B[k].d, cu_PEMs[j].d, ( sizeof(unsigned) * cu_PEMs[j].top ));
         }
-    }*/
-
-    BIGNUM *bnA;
-    BIGNUM *bnB;
-    BIGNUM *r;
-    BN_CTX *ctx;
-    bnA = BN_new();
-    bnB = BN_new();
-    ctx = BN_CTX_new();
-    r=BN_new();
-    assert( 0 < BN_dec2bn(&bnA, "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081") );
-    assert( 0 < BN_dec2bn(&bnB, "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637") );
-
-    clock_t start_clk = clock();
-    for(i=0; i<N; i++){
-        BN_gcd(r, bnA, bnB, ctx);
     }
-    clock_t stop_clk = clock();
-    double elapsed = (double)(stop_clk - start_clk) * 1000.0 / CLOCKS_PER_SEC;
-    printf("[CPU] Time elapsed in ms: %f\n", elapsed);
 
-    BN_CTX_free(ctx);
-    BN_free(r);
-    BN_free(bnA);
-    BN_free(bnB);
+    printf("k:  %u\n", k);
+
 
     cudaDeviceReset();
     cudaStatus = cudaMalloc((void**)&device_U_BN_A, N*sizeof(U_BN));    
@@ -482,12 +449,13 @@ int main(void){
     cudaEventRecord(start, 0);
 
     testKernel<<<((N + THREADS_PER_BLOCK -1)/THREADS_PER_BLOCK), THREADS_PER_BLOCK>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, n);
+   // testKernel<<<8, THREADS_PER_BLOCK>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, n);
 
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
     float time;
     cudaEventElapsedTime(&time, start, stop);
-    printf("[GPU] Time elapsed in ms %fms\n", time);
+    printf("[GPU] Time elapsed in ms %f\n", time);
     cudaPrintfDisplay(stdout, true);
     cudaPrintfEnd();
 
@@ -529,6 +497,7 @@ int main(void){
             }
 		}
 	}*/
+
     cudaFree(out);
 	free(array);
     cudaFree(device_U_BN_A);
