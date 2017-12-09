@@ -97,4 +97,7 @@ U_BN *cu_euclid(U_BN *a, U_BN *b);
 int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn);
 U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b);
 U_BN *cu_classic_euclid(U_BN *a, U_BN *b);
+int cu_ubn_copy(U_BN *a, const U_BN *b);
+unsigned cu_ubn_add_words(unsigned *r, const unsigned *a, const unsigned *b, int n);
+int cu_ubn_uadd(const U_BN *a, const U_BN *b, U_BN *r);
 #endif /* CUDA_BIGNUM_H */

@@ -4,6 +4,7 @@
 #include "cuda_bignum.h"
 #include "files_manager.h"
 #include <assert.h>
+#include <time.h>
 
 #define TRACE 1
 
@@ -43,4 +44,7 @@ void bignum2u_bn_test(void);
 void get_u_bn_from_mod_PEM_test(void);
 void cu_fast_binary_euclid_test(void);
 void cu_classic_euclid_test(void);
+void cu_ubn_copy_test(void);
+void cu_ubn_uadd_test(void);
+void cu_ubn_add_words_test(void);
 #endif /* TEST_H */

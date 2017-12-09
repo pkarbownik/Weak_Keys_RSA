@@ -27,6 +27,9 @@ void unit_test(void){
 	get_u_bn_from_mod_PEM_test();
 	//cu_fast_binary_euclid_test();
 	cu_classic_euclid_test();
+	cu_ubn_copy_test();
+	cu_ubn_uadd_test();
+	cu_ubn_add_words_test();
 	INFO("tests completed\n");
 }
 
@@ -323,7 +326,6 @@ void cu_euclid_test(void){
 void cu_fast_binary_euclid_test(void){
 	U_BN   *A = NULL, *B = NULL;
 	BIGNUM *A_bn = NULL, *B_bn = NULL;
-	unsigned L=5, N=1; 
 
 	A = cu_BN_new();
 	B = cu_BN_new();
@@ -417,5 +419,58 @@ void get_u_bn_from_mod_PEM_test(void){
 	assert( 1 == get_u_bn_from_mod_PEM("keys_and_messages/1.pem", u_bn));
 	//printf("from PEM file: %s\n", cu_bn_bn2hex(u_bn));
 	cu_BN_free(u_bn);
+	INFO("Test passed\n");
+}
+
+void  cu_ubn_copy_test(void){
+	U_BN   *A = NULL, *B = NULL;
+	A = cu_BN_new();
+	B = cu_BN_new();
+	cu_BN_dec2bn(A, "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703");
+	cu_BN_dec2bn(B, "153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678");
+	assert( 1 == cu_ubn_copy(A, B));
+	assert(!strcmp(cu_bn_bn2hex(A), cu_bn_bn2hex(B)));
+	cu_BN_free(A);
+	cu_BN_free(B);
+	INFO("Test passed\n");
+}
+
+void cu_ubn_uadd_test(void){
+	U_BN   *A = NULL, *B = NULL;
+	U_BN   *C = NULL;
+	A = cu_BN_new();
+	B = cu_BN_new();
+	C = cu_BN_new();
+	cu_BN_dec2bn(A, "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171");
+	cu_BN_dec2bn(B, "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171");
+	cu_BN_dec2bn(C, "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171");
+	assert(1 == cu_ubn_uadd(A, B, C));
+	assert(!strcmp("3D6D04ECF36DA4AC1E32786F647ECAC3553E24BD9713EB74E14A38FB1B88430C68FDE7EE21C251B44A66D049EE65BC95C7A9D36E503FB0E3B2062D644A99C613EC5D49174489558F03B331E6", cu_bn_bn2hex(C)));
+	//INFO("C: %s\n", cu_bn_bn2hex(C));
+	cu_BN_free(A);
+	cu_BN_free(B);
+	cu_BN_free(C);
+	INFO("Test passed\n");
+}
+
+
+void cu_ubn_add_words_test(void){
+	unsigned *ap = ((unsigned*)malloc(100*sizeof(unsigned)));
+	unsigned *bp = ((unsigned*)malloc(100*sizeof(unsigned)));
+	unsigned *rp = ((unsigned*)malloc(101*sizeof(unsigned)));
+	unsigned i;
+	for(i=0; i<100; i++){
+		ap[i]=4294967295;
+		bp[i]=4294967295;
+	}
+	rp[100]=cu_ubn_add_words(rp, ap, bp, 100);
+	assert(1 == rp[100]);
+	assert(4294967294 == rp[0]);
+	for(i=1; i<100; i++){
+		assert(4294967295 == rp[i]);
+	}
+	free(ap);
+	free(bp);
+	free(rp);	
 	INFO("Test passed\n");
 }

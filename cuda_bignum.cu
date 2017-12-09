@@ -682,19 +682,11 @@ int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn){
 }
 
 U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b){
-    U_BN *t = NULL;
     do {
         cu_bn_usub(a, b, a);
         cu_BN_rshift1(a);
-        if (cu_BN_ucmp(a, b) < 0) {
-            t = a;
-            a = b;
-            b = t;
-        }
     } while (!CU_BN_is_zero(b));
-
     return (a);
-
 }
 
 U_BN *cu_classic_euclid(U_BN *a, U_BN *b){
@@ -711,4 +703,113 @@ U_BN *cu_classic_euclid(U_BN *a, U_BN *b){
 
     return (a);
 
+}
+
+
+int cu_ubn_copy(U_BN *a, const U_BN *b)
+{
+    int i;
+    unsigned a0;
+
+    if (a == b)
+        return (0);
+
+    for (i = 0; i < b->top; i++) {
+        a0 = b->d[i];
+        a->d[i] = a0;
+    }
+    //memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
+    a->top = b->top;
+    return (1);
+}
+
+
+/*U_BN *Algorithm_PM(U_BN *a, U_BN *b){
+    int q=0;
+    while (!CU_BN_is_zero(b)) {
+        while(cu_BN_is_odd(b)){
+            cu_BN_rshift1(b);
+            q++;
+            if(q >= 0) {
+                t = a;
+                a = b;
+                b = t;
+                q=-q;
+            }
+            if(((a->d[0]&3)+(b->d[0]&3))&3==0) 
+            else
+
+        }
+    }
+
+
+    return (a);
+
+}*/
+
+
+unsigned cu_ubn_add_words(unsigned *r, const unsigned *a, const unsigned *b, int n)
+{
+    long ll = 0;
+    int i;
+    if (n <= 0)
+        return (0);
+
+    for (i = 0; i < n; i++) {
+        ll += (BN_ULLONG) a[i] + b[i];
+        r[i] = (long)ll & CU_BN_MASK2;
+        ll >>= CU_BN_BITS2;
+    }
+    return (ll);
+}
+
+int cu_ubn_uadd(const U_BN *a, const U_BN *b, U_BN *r)
+{
+    int max, min, dif;
+    unsigned *ap, *bp, *rp, carry, t1, t2;
+    const U_BN *tmp;
+
+    if (a->top < b->top) {
+        tmp = a;
+        a = b;
+        b = tmp;
+    }
+    max = a->top;
+    min = b->top;
+    dif = max - min;
+
+    r->top = max;
+
+    ap = a->d;
+    bp = b->d;
+    rp = r->d;
+
+    carry = cu_ubn_add_words(rp, ap, bp, min);
+    //rp += min;
+    //ap += min;
+    //bp += min;
+
+    if (carry) {
+        while (dif) {
+            dif--;
+            t1 = *(ap++);
+            t2 = (t1 + 1) & CU_BN_MASK2;
+            *(rp++) = t2;
+            if (t2) {
+                carry = 0;
+                break;
+            }
+        }
+        if (carry) {
+            /* carry != 0 => dif == 0 */
+            *rp = 1;
+            r->top++;
+        }
+    }
+    if (dif && rp != ap)
+        while (dif--)
+            /* copy remaining words if ap != rp */
+            *(rp++) = *(ap++);
+
+    return (1);
 }
