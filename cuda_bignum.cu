@@ -278,6 +278,7 @@ int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
     if(NULL == a->d || NULL == b->d || NULL == r->d)
         return 0;
 
+
     max = a->top;
     min = b->top;
     dif = cu_long_abs(max - min);
@@ -682,9 +683,21 @@ int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn){
 }
 
 U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b){
+    U_BN *t = NULL;
     do {
-        cu_bn_usub(a, b, a);
-        cu_BN_rshift1(a);
+        if (cu_BN_ucmp(a, b) < 0) {
+            t = a;
+            a = b;
+            b = t;
+        }
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
+        DEBUG_PRINT("b is equal: %s\n", cu_bn_bn2hex(b));
+        if(!cu_bn_usub(a, b, a)) break;
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
+        DEBUG_PRINT("b is equal: %s\n", cu_bn_bn2hex(b));
+        while(!(a->d[0]&1)) {
+            if(!cu_BN_rshift1(a)) break;
+        }
     } while (!CU_BN_is_zero(b));
     return (a);
 }
@@ -722,30 +735,6 @@ int cu_ubn_copy(U_BN *a, const U_BN *b)
     a->top = b->top;
     return (1);
 }
-
-
-/*U_BN *Algorithm_PM(U_BN *a, U_BN *b){
-    int q=0;
-    while (!CU_BN_is_zero(b)) {
-        while(cu_BN_is_odd(b)){
-            cu_BN_rshift1(b);
-            q++;
-            if(q >= 0) {
-                t = a;
-                a = b;
-                b = t;
-                q=-q;
-            }
-            if(((a->d[0]&3)+(b->d[0]&3))&3==0) 
-            else
-
-        }
-    }
-
-
-    return (a);
-
-}*/
 
 
 unsigned cu_ubn_add_words(unsigned *r, const unsigned *a, const unsigned *b, int n)
@@ -812,4 +801,89 @@ int cu_ubn_uadd(const U_BN *a, const U_BN *b, U_BN *r)
             *(rp++) = *(ap++);
 
     return (1);
+}
+
+U_BN *q_algorithm_PM(U_BN *a, U_BN *b){
+    int q=0;
+    U_BN *t = NULL;
+    while (!CU_BN_is_zero(b)) {
+        DEBUG_PRINT("q: %d b: %s\n", q, cu_bn_bn2hex(b));
+        while(!cu_BN_is_odd(b)){
+            cu_BN_rshift1(b);
+            q++;
+        }
+        if(q >= 0) {
+            t = a;
+            a = b;
+            b = t;
+            q=-q;
+        }
+        if((a->d[0]+b->d[0])&3==0) {
+            cu_ubn_uadd(a, b, b);
+            cu_BN_rshift1(b);
+        } else {
+            cu_bn_usub(a, b, b);
+            cu_BN_rshift1(b);
+        }
+    }
+    return (a);
+
+}
+
+U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize){
+    int beta=keysize, alfa=keysize, tmp;
+    U_BN *t = NULL;
+    while (!CU_BN_is_zero(b)) {
+        //DEBUG_PRINT("b: %s\n", cu_bn_bn2hex(b));
+        while(!cu_BN_is_odd(b)){
+            cu_BN_rshift1(b);
+            beta--;
+        }
+        if(alfa >= beta) {
+            t = a;
+            a = b;
+            b = t;
+            tmp = alfa;
+            alfa = beta;
+            beta = tmp;
+            
+        }
+        if((a->d[0]+b->d[0])&3==0) {
+            cu_ubn_uadd(a, b, b);
+            cu_BN_rshift1(b);
+        } else {
+            cu_bn_usub(a, b, b);
+            cu_BN_rshift1(b);
+        }
+    }
+    return (a);
+
+}
+
+U_BN *cu_approximate_euclid(U_BN *a, U_BN *b, unsigned keysize){
+    int beta=keysize, alfa=keysize, tmp;
+    U_BN *t = NULL;
+    do{
+        if(beta==0){
+            if(!(alfa&1)) alfa --;
+            cu_BN_mul_word(b, alfa);
+            cu_bn_usub(a, b, a);
+        } else {
+            
+        }
+    } while(!cu_BN_is_odd(b));
+
+
+    while (cu_BN_ucmp(a, b) != 0) {
+        if (cu_BN_ucmp(a, b) > 0) {
+            cu_bn_usub(a, b, a); 
+        }
+        else {
+            cu_bn_usub(b, a, b);
+        }
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
+    }
+
+    return (a);
+
 }

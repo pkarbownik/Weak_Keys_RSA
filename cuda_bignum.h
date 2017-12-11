@@ -100,4 +100,6 @@ U_BN *cu_classic_euclid(U_BN *a, U_BN *b);
 int cu_ubn_copy(U_BN *a, const U_BN *b);
 unsigned cu_ubn_add_words(unsigned *r, const unsigned *a, const unsigned *b, int n);
 int cu_ubn_uadd(const U_BN *a, const U_BN *b, U_BN *r);
+U_BN *q_algorithm_PM(U_BN *a, U_BN *b);
+U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize);
 #endif /* CUDA_BIGNUM_H */

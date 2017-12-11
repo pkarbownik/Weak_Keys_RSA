@@ -47,4 +47,6 @@ void cu_classic_euclid_test(void);
 void cu_ubn_copy_test(void);
 void cu_ubn_uadd_test(void);
 void cu_ubn_add_words_test(void);
+void q_algorithm_PM_test(void);
+void algorithm_PM_test(void);
 #endif /* TEST_H */
