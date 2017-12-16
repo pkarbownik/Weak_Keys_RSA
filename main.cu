@@ -54,81 +54,31 @@ __host__ __device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
     register unsigned t1, t2, *ap, *bp, *rp;
     int i, carry;
 
-    if(NULL == a || NULL == b || NULL == r)
-        return 0;
-
-    if(NULL == a->d || NULL == b->d || NULL == r->d)
-        return 0;
-
     max = a->top;
     min = b->top;
-    dif = cu_dev_long_abs(max - min);
+    dif = max - min;
 
     ap = a->d;
     bp = b->d;
     rp = r->d;
 
-#if 1
     carry = 0;
-    for (i = min; i != 0; i--) {
+    for (i = 0; i < min; i++) {
         t1 = *(ap++);
         t2 = *(bp++);
-        if (carry) {
-            carry = (t1 <= t2);
-            t1 = (t1 - t2 - 1);// & BN_MASK2;
-        } else {
-            carry = (t1 < t2);
-            t1 = (t1 - t2);// & BN_MASK2;
-        }
-# if defined(IRIX_CC_BUG) && !defined(LINT)
-        dummy = t1;
-# endif
-        *(rp++) = t1;// & BN_MASK2;
+        *(rp++) = (t1 - t2 - carry);
+        carry = (t1 < t2);
     }
-#else
-    carry = bn_sub_words(rp, ap, bp, min);
-    ap += min;
-    bp += min;
-    rp += min;
-#endif
-    if (carry) {     
-        if (!dif)
 
-            return 0;
-        while (dif) {
-            dif--;
-            t1 = *(ap++);
-            t2 = (t1 - 1);// & BN_MASK2;
-            *(rp++) = t2;
-            if (t1)
-                break;
-        }
+    while (dif) {
+        t1 = *(ap++);
+        t2 = (t1 - carry);
+        carry = (carry > t1);
+        *(rp++) = t2;
+        dif--;
     }
-#if 0
-    memcpy(rp, ap, sizeof(*rp) * (max - i));
-#else
-    if (rp != ap) {
-        for (;;) {
-            if (!dif--)
-                break;
-            rp[0] = ap[0];
-            if (!dif--)
-                break;
-            rp[1] = ap[1];
-            if (!dif--)
-                break;
-            rp[2] = ap[2];
-            if (!dif--)
-                break;
-            rp[3] = ap[3];
-            rp += 4;
-            ap += 4;
-        }
-    }
-#endif
 
     r->top = max;
-    cu_bn_correct_top(r);
     return (1);
 
 }
@@ -269,17 +219,17 @@ __host__ __device__ U_BN *cu_dev_binary_euclid(U_BN *a, U_BN *b){
 __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     do {
-        cu_dev_bn_usub(a, b, a);
-        cu_dev_bn_rshift1(a);
         if (cu_dev_BN_ucmp(a, b) < 0) {
             t = a;
             a = b;
             b = t;
         }
+        if(!cu_dev_bn_usub(a, b, a)) break;
+        while(!(a->d[0]&1)) {
+            if(!cu_dev_bn_rshift1(a)) break;
+        }
     } while (!CU_BN_is_zero(b));
-
     return (a);
-
 }
 
 __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
@@ -367,16 +317,17 @@ void CPU_computation(void){
 
 __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
     int i= blockIdx.x * blockDim.x + threadIdx.x;
-    //U_BN *TMP=NULL;
+    U_BN *TMP=NULL;
     if(i<n){
         //cu_dev_bn_rshift1(&A[i]);
         //cu_dev_bn_lshift(&A[i], 1);
-        //cu_dev_bn_usub(&A[i],&B[i],TMP);
+        //cu_dev_bn_usub(&A[i],&B[i],&C[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
         //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
         //if(TMP->d[0]!=1)
         //    cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
-        //C[i] = *TMP;
+        C[i] = *TMP;
     }
     //else
         //cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
@@ -395,7 +346,7 @@ int main(void){
     cudaError_t cudaStatus;
 
     unit_test();
-    CPU_computation();
+    //CPU_computation();
 
     A    = (U_BN*)malloc(N*sizeof(U_BN));
     B    = (U_BN*)malloc(N*sizeof(U_BN));

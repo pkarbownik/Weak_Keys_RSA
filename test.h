@@ -29,6 +29,7 @@ void cu_BN_bn2hex_test(void);
 void cu_BN_ucmp_test(void);
 void cu_long_abs_test(void);
 void cu_bn_usub_test(void);
+void cu_bn_usub_optimized_test(void);
 void cu_bn_bn2dec_test(void);
 void cu_bn_num_bits_word_test(void);
 void cu_bn_num_bits_test(void);

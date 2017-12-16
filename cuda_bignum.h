@@ -102,4 +102,5 @@ unsigned cu_ubn_add_words(unsigned *r, const unsigned *a, const unsigned *b, int
 int cu_ubn_uadd(const U_BN *a, const U_BN *b, U_BN *r);
 U_BN *q_algorithm_PM(U_BN *a, U_BN *b);
 U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize);
+int cu_bn_usub_optimized(const U_BN *a, const U_BN *b, U_BN *r);
 #endif /* CUDA_BIGNUM_H */
