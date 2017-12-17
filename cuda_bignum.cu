@@ -355,7 +355,7 @@ int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
 /* unsigned subtraction of b from a, a must be larger than b. */
 int cu_bn_usub_optimized(const U_BN *a, const U_BN *b, U_BN *r){
 
-    unsigned max, min, dif;
+   unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
     int i, carry;
 
@@ -366,15 +366,13 @@ int cu_bn_usub_optimized(const U_BN *a, const U_BN *b, U_BN *r){
     ap = a->d;
     bp = b->d;
     rp = r->d;
-
     carry = 0;
     for (i = 0; i < min; i++) {
         t1 = *(ap++);
         t2 = *(bp++);
         *(rp++) = (t1 - t2 - carry);
-        carry = (t1 < t2);
+        carry = (t1 < (t2 + carry));
     }
-
     while (dif) {
         t1 = *(ap++);
         t2 = (t1 - carry);
@@ -382,8 +380,8 @@ int cu_bn_usub_optimized(const U_BN *a, const U_BN *b, U_BN *r){
         *(rp++) = t2;
         dif--;
     }
-
     r->top = max;
+    cu_bn_correct_top(r);
     return (1);
 
 }

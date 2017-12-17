@@ -5,8 +5,8 @@
 #include <time.h>
 //#include <openssl/bn.h>
 
-#define N 4950
-#define KEYS 100
+#define N 499500
+#define KEYS 1000
 #define KEY_SIZE 4096
 #define THREADS_PER_BLOCK 512
 
@@ -50,6 +50,7 @@ __host__ __device__ long cu_dev_long_abs(long number){
 
 __host__ __device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
 
+
     unsigned max, min, dif;
     register unsigned t1, t2, *ap, *bp, *rp;
     int i, carry;
@@ -61,15 +62,14 @@ __host__ __device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
     ap = a->d;
     bp = b->d;
     rp = r->d;
-
     carry = 0;
+
     for (i = 0; i < min; i++) {
         t1 = *(ap++);
         t2 = *(bp++);
         *(rp++) = (t1 - t2 - carry);
-        carry = (t1 < t2);
+        carry = (t1 < (t2 + carry));
     }
-
     while (dif) {
         t1 = *(ap++);
         t2 = (t1 - carry);
@@ -77,10 +77,9 @@ __host__ __device__ int cu_dev_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
         *(rp++) = t2;
         dif--;
     }
-
     r->top = max;
+    cu_bn_correct_top(r);
     return (1);
-
 }
 
 
@@ -346,7 +345,7 @@ int main(void){
     cudaError_t cudaStatus;
 
     unit_test();
-    //CPU_computation();
+    CPU_computation();
 
     A    = (U_BN*)malloc(N*sizeof(U_BN));
     B    = (U_BN*)malloc(N*sizeof(U_BN));
@@ -472,13 +471,13 @@ int main(void){
         return 1;
     }
 
-	/*for(i=0, k=0; i<KEYS; i++){
+	for(i=0, k=0; i<KEYS; i++){
 		for(j=(i+1); j<KEYS; j++, k++){
 			if( strcmp( "1", cu_bn_bn2hex(&C[k]))){
 				printf("i: %d, j: %d, C[%d]: %s\n", i, j, k, cu_bn_bn2hex(&C[k]));
             }
 		}
-	}*/
+	}
 
     cudaFree(out);
 	free(array);
