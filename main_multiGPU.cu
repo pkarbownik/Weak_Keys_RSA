@@ -2,11 +2,17 @@
 #include "test.h"
 #include "cuda_bignum.h"
 #include "files_manager.h"
+#include "main_multiGPU.h"
 #include <time.h>
 //#include <openssl/bn.h>
 
-#define N 490500
-#define KEYS 1000
+
+////////////////////////////////////////////////////////////////////////////////
+// Data configuration
+////////////////////////////////////////////////////////////////////////////////
+const int MAX_GPU_COUNT = 32;
+#define N 4950
+#define KEYS 100
 #define KEY_SIZE 1024
 #define THREADS_PER_BLOCK 512
 
@@ -351,7 +357,15 @@ void CPU_computation(void){
 
 }
 
-__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
+int checkCudaErrors(cudaError_t cudaStatus){
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "\n CudaError: %s\n", cudaGetErrorString(cudaStatus));
+        return 1;
+    }
+    return 0;
+}
+
+__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int n) {
     int i= blockIdx.x * blockDim.x + threadIdx.x;
     U_BN *TMP=NULL;
 
@@ -369,16 +383,39 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
 }
 
 int main(void){
+   //Solver config
+    TGPUplan      plan[MAX_GPU_COUNT];
+    cudaError_t cudaStatus;
+
+
+    float sumGPU;
+    double sumCPU, diff;
+
+    int i, j, gpuBase, GPU_N;
+    unsigned planSum;
+    unsigned sum=0;
+
+    const int  BLOCK_N = 32;
+    const int THREAD_N = 256;
+    const int  ACCUM_N = BLOCK_N * THREAD_N;
+
+    printf("Starting simpleMultiGPU\n");
+    checkCudaErrors(cudaGetDeviceCount(&GPU_N));
+
+    if (GPU_N > MAX_GPU_COUNT)
+    {
+        GPU_N = MAX_GPU_COUNT;
+    }
+
+
 
     U_BN tmp;
     int L = ((KEY_SIZE / sizeof(unsigned))+1);
-    unsigned i, j;
+    unsigned p, z;
     unsigned k = 0, n = N;
-    U_BN   *A, *B, *C;
-    U_BN   *device_U_BN_A, *device_U_BN_B, *device_U_BN_C;
     U_BN   *cu_PEMs;
     char *tmp_path;
-    cudaError_t cudaStatus;
+    U_BN   *A, *B, *C;
 
     unit_test();
     CPU_computation();
@@ -387,6 +424,7 @@ int main(void){
     B    = (U_BN*)malloc(N*sizeof(U_BN));
     C    = (U_BN*)malloc(N*sizeof(U_BN));
     cu_PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
+
 
     for(i=0; i<N; i++){
 
@@ -413,8 +451,6 @@ int main(void){
         B[i] = b;
         C[i] = c;
 
-        //cu_BN_dec2bn(&A[i], "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081");
-        //cu_BN_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
     }
 
     for(i=0; i<KEYS; i++){
@@ -431,40 +467,124 @@ int main(void){
         }
     }
 
-
-
-    cudaDeviceReset();
-    cudaStatus = cudaMalloc((void**)&device_U_BN_A, N*sizeof(U_BN));    
-    cudaStatus = cudaMalloc((void**)&device_U_BN_B, N*sizeof(U_BN));
-    cudaStatus = cudaMalloc((void**)&device_U_BN_C, N*sizeof(U_BN));
-    cudaStatus = cudaMemcpy(device_U_BN_A, A, N*sizeof(U_BN), cudaMemcpyHostToDevice);
-    cudaStatus = cudaMemcpy(device_U_BN_B, B, N*sizeof(U_BN), cudaMemcpyHostToDevice);
-    cudaStatus = cudaMemcpy(device_U_BN_C, C, N*sizeof(U_BN), cudaMemcpyHostToDevice);
-
-    unsigned long *out;
-
-    for(i = 0; i < N; i++) {
-
-        cudaMalloc(&out, L*sizeof(unsigned));
-        cudaMemcpy(out, A[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
-        cudaMemcpy(&device_U_BN_A[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
-        cudaMalloc(&out, L*sizeof(unsigned));
-        cudaMemcpy(out, B[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
-        cudaMemcpy(&device_U_BN_B[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
-        cudaMalloc(&out, L*sizeof(unsigned));
-        cudaMemcpy(out, C[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
-        cudaMemcpy(&device_U_BN_C[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
+    //Subdividing input data across GPUs
+    //Get data sizes for each GPU
+    for (i = 0; i < GPU_N; i++)
+    {
+        plan[i].dataN = N / GPU_N;
     }
 
+    //Take into account "odd" data sizes
+    for (i = 0; i < N % GPU_N; i++)
+    {
+        plan[i].dataN++;
+    }
+
+    //Assign data ranges to GPUs
+    gpuBase = 0;
+
+    for (i = 0; i < GPU_N; i++)
+    {
+        gpuBase += plan[i].dataN;
+    }
+
+    planSum=0;
+    //Create streams for issuing GPU command asynchronously and allocate memory (GPU and System page-locked)
+    for (i = 0; i < GPU_N; i++){
+
+        checkCudaErrors(cudaSetDevice(i));
+        checkCudaErrors(cudaStreamCreate(&plan[i].stream));
+        //Allocate memory
+        checkCudaErrors(cudaMalloc((void **)&plan[i].device_U_BN_A, plan[i].dataN * sizeof(U_BN)));
+        checkCudaErrors(cudaMalloc((void **)&plan[i].device_U_BN_B, plan[i].dataN * sizeof(U_BN)));
+        checkCudaErrors(cudaMalloc((void **)&plan[i].device_U_BN_C, plan[i].dataN * sizeof(U_BN)));
+
+        plan[i].h_A    = (U_BN*)malloc(plan[i].dataN * sizeof(U_BN));
+        plan[i].h_B    = (U_BN*)malloc(plan[i].dataN * sizeof(U_BN));
+        plan[i].h_C    = (U_BN*)malloc(plan[i].dataN * sizeof(U_BN));
+
+        for(j=0; j<plan[i].dataN; j++){
+
+            U_BN a;
+            U_BN b;
+            U_BN c;
+            a.d = (unsigned*)malloc(L*sizeof(unsigned));
+            b.d = (unsigned*)malloc(L*sizeof(unsigned));
+            c.d = (unsigned*)malloc(L*sizeof(unsigned));
+            a.top =   L;
+            b.top =   L;
+            c.top =   L;
+
+            for(k=0; k<L; k++)
+                a.d[k]=0;
+
+            for(k=0; k<L; k++)
+                b.d[k]=0;
+
+            for(k=0; k<L; k++)
+                c.d[k]=0;
+
+            plan[i].h_A[j] = a;
+            plan[i].h_B[j] = b;
+            plan[i].h_B[j] = c;
+
+        }
+
+
+        for(k=planSum, p=0; k<(planSum+plan[i].dataN); p++, k++){
+                plan[i].h_A[p] = A[k];
+                plan[i].h_B[p] = B[k];
+        }
+        planSum+=plan[i].dataN;
+    }
+
+    //Start timing and compute on GPU(s)
+    printf("Computing with %d GPUs...\n", GPU_N);
+
     cudaPrintfInit();
-
-
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start, 0);
 
-    testKernel<<<((N + THREADS_PER_BLOCK -1)/THREADS_PER_BLOCK), THREADS_PER_BLOCK>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, n);
+    //Copy data to GPU, launch the kernel and copy data back. All asynchronously
+    for (i = 0; i < GPU_N; i++)
+    {
+        //Set device
+        checkCudaErrors(cudaSetDevice(i));
+
+        //Copy input data from CPU
+        checkCudaErrors(cudaMemcpyAsync(plan[i].device_U_BN_A, plan[i].h_A, plan[i].dataN * sizeof(U_BN), cudaMemcpyHostToDevice, plan[i].stream));
+        checkCudaErrors(cudaMemcpyAsync(plan[i].device_U_BN_B, plan[i].h_B, plan[i].dataN * sizeof(U_BN), cudaMemcpyHostToDevice, plan[i].stream));
+
+        unsigned *buffer;
+        j=0;
+        for(j = 0; j < plan[i].dataN; j++) {
+
+            checkCudaErrors(cudaMalloc(&buffer, L*sizeof(unsigned)));
+            checkCudaErrors(cudaMemcpyAsync(buffer, plan[i].h_A[j].d, L*sizeof(unsigned), cudaMemcpyHostToDevice, plan[i].stream));
+            checkCudaErrors(cudaMemcpyAsync(&plan[i].device_U_BN_A[j].d, &buffer, sizeof(void*), cudaMemcpyHostToDevice, plan[i].stream));
+            checkCudaErrors(cudaMalloc(&buffer, L*sizeof(unsigned)));
+            checkCudaErrors(cudaMemcpyAsync(buffer, plan[i].h_B[j].d, L*sizeof(unsigned), cudaMemcpyHostToDevice, plan[i].stream));
+            checkCudaErrors(cudaMemcpyAsync(&plan[i].device_U_BN_B[j].d, &buffer, sizeof(void*), cudaMemcpyHostToDevice, plan[i].stream));
+
+        }
+
+        cudaFree(buffer);
+
+        //Perform GPU computations
+        testKernel<<<BLOCK_N, THREAD_N, 0, plan[i].stream>>>(plan[i].device_U_BN_A, plan[i].device_U_BN_B, plan[i].device_U_BN_C, plan[i].dataN);
+        //getLastCudaError("testKernel() execution failed.\n");
+
+        checkCudaErrors(cudaMemcpyAsync(plan[i].h_C, plan[i].device_U_BN_C, plan[i].dataN *sizeof(U_BN), cudaMemcpyDeviceToHost, plan[i].stream));
+        for(j = 0; j < plan[i].dataN; ++j) {
+            buffer = (unsigned*)malloc(L*sizeof(unsigned));
+            cudaMemcpy(buffer, plan[i].h_C[j].d , L*sizeof(unsigned), cudaMemcpyDeviceToHost);
+            plan[i].h_C[j].d = buffer;
+            //Read back GPU results
+        }
+        free(buffer);
+    }
 
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
@@ -474,49 +594,43 @@ int main(void){
     cudaPrintfDisplay(stdout, true);
     cudaPrintfEnd();
 
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "\n testKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return 1;
-    }
+    //Process GPU results
+    for (i = 0; i < GPU_N; i++)
+    {
 
-    cudaStatus = cudaMemcpy(A, device_U_BN_A, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
-    cudaStatus = cudaMemcpy(B, device_U_BN_B, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
-    cudaStatus = cudaMemcpy(C, device_U_BN_C, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
 
-    unsigned *array = (unsigned*)malloc(L*sizeof(unsigned));
+        //Set device
+        checkCudaErrors(cudaSetDevice(i));
 
-    for(i = 0; i < N; ++i) {
-        array = (unsigned*)malloc(L*sizeof(unsigned));
-        cudaMemcpy(array, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
-        A[i].d = array;
+        //Wait for all operations to finish
+        cudaStreamSynchronize(plan[i].stream);
 
-        cudaMemcpy(array, B[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
-        B[i].d = array;
-
-        cudaMemcpy(array, C[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
-        C[i].d = array;
-
-    }
-
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "\n testKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return 1;
-    }
-
-    /*for(i=0, k=0; i<KEYS; i++){
-        for(j=(i+1); j<KEYS; j++, k++){
-            if( strcmp( "1", cu_bn_bn2hex(&C[k]))){
-                printf("i: %d, j: %d, C[%d]: %s\n", j, i, k, cu_bn_bn2hex(&C[k]));
-            }
+        for (j = 0; j < plan[i].dataN; j++)
+        {
+            if(plan[i].h_C[j].d[0]!=1)
+                sum += 1;
         }
-    }*/
-    cudaFree(out);
-    free(array);
-    cudaFree(device_U_BN_A);
-    cudaFree(device_U_BN_B);
-    cudaFree(device_U_BN_C);
+
+
+        //Shut down this GPU
+        free(plan[i].h_C);
+        checkCudaErrors(cudaFree(plan[i].device_U_BN_A));
+        checkCudaErrors(cudaFree(plan[i].device_U_BN_B));
+        checkCudaErrors(cudaFree(plan[i].device_U_BN_C));
+        checkCudaErrors(cudaStreamDestroy(plan[i].stream));
+    }
+
+    printf("[GPU] Weak keys: %d\n", sum);
+
+    // Cleanup and shutdown
+    for (i = 0; i < GPU_N; i++)
+    {
+        checkCudaErrors(cudaSetDevice(i));
+        free(plan[i].h_A);
+        free(plan[i].h_B);
+        cudaDeviceReset();
+    }
+ 
 
     return (0);
 }

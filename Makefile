@@ -86,7 +86,7 @@ LFLAGS = -Lopenssl_built/lib
 
 LIBS = -lcrypto -lssl
 
-SRCS = main.cu cuda_bignum.cu test.cu files_manager.cu
+SRCS = main_multiGPU.cu cuda_bignum.cu test.cu files_manager.cu
 
 OBJS = $(SRCS:.cu=.o)
 
@@ -98,7 +98,7 @@ MAIN = GCD_RSA
 all:    $(MAIN)
 	@echo  Program has been compiled
 
-main.o: main.cu
+main_multiGPU.o: main_multiGPU.cu
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
 cuda_bignum.o: cuda_bignum.cu
@@ -110,7 +110,7 @@ test.o: test.cu
 files_manager.o: files_manager.cu
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -c $<  -o $@
 
-$(MAIN): main.o test.o cuda_bignum.o files_manager.o
+$(MAIN): main_multiGPU.o test.o cuda_bignum.o files_manager.o
 	$(CC) $(NVCCFLAGS) $(INCLUDES) $(GENCODE_FLAGS) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 run: build
