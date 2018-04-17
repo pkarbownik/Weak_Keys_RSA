@@ -25,6 +25,8 @@ const int MAX_GPU_COUNT = 32;
                                   __VA_ARGS__)
 #endif
 
+cudaError_t cudaStatus;
+
 __host__ __device__ int cu_dev_BN_ucmp(const U_BN *a, const U_BN *b){
 
     int i;
@@ -303,21 +305,22 @@ __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
 
 }
 
-void CPU_computation(void){
+void CPU_computation(unsigned number_of_keys, unsigned key_size){
 
     U_BN tmp;
+    unsigned sum=0;
     BIGNUM *r;
     BN_CTX *ctx;
     EVP_PKEY* pPubKey  = NULL;
     FILE*     pemFile    = NULL;
     RSA* rsa;
     int i, j;
-    int L = ((KEY_SIZE / sizeof(unsigned))+1);
+    int L = ((key_size / sizeof(unsigned))+1);
     unsigned k = 0;
     BIGNUM   *PEMs;
     char *tmp_path;
 
-    PEMs = (BIGNUM*)malloc(KEYS*sizeof(BIGNUM));
+    PEMs = (BIGNUM*)malloc(number_of_keys*sizeof(BIGNUM));
     tmp.d = (unsigned*)malloc(L*sizeof(unsigned));
     tmp.top = L;
 
@@ -325,9 +328,9 @@ void CPU_computation(void){
         tmp.d[j]=0;
     }
 
-    for(i=0; i<KEYS; i++){
+    for(i=0; i<number_of_keys; i++){
 
-        asprintf(&tmp_path, "keys/%d.pem", (i+1));
+        asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
             fprintf(stderr,"Cannot read \"public key\".\n");
         }
@@ -341,17 +344,19 @@ void CPU_computation(void){
     ctx = BN_CTX_new();
     r=BN_new();
     clock_t start = clock();
-    for(i=0, k=0; i<KEYS; i++){
-        for(j=(i+1); j<KEYS; j++, k++){
+    for(i=0, k=0; i<number_of_keys; i++){
+        for(j=(i+1); j<number_of_keys; j++, k++){
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
-            /*if(!BN_is_one(r)){
-                printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
-            }*/
+            if(!BN_is_one(r)){
+                //printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
+                sum+=1;
+            }
         }
     }
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     printf("[CPU] Time elapsed in ms: %f\n", elapsed);
+    printf("[CPU] Weak keys: %u\n", sum);
     BN_CTX_free(ctx);
     BN_free(r);
 
@@ -373,33 +378,60 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int n) {
         //cu_dev_bn_rshift1(&A[i]);
         //cu_dev_bn_lshift(&A[i], 1);
         //cu_dev_bn_usub(&A[i],&B[i],TMP);
-        //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        TMP = cu_dev_binary_euclid(&A[i], &B[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
-        TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
-        //if(TMP->d[0]!=1)
-        //    cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
+        //TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
+        if(TMP->d[0]!=1) {
+            cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
+        }
         C[i] = *TMP;
     }
 }
 
-int main(void){
+int main(int argc, char* argv[]){
+    unsigned number_of_keys;
+    unsigned key_size;
+    unsigned thread_per_block;
+    unsigned blocks;
+    int counter;
+    if(argc==5) {
+        for(counter=0;counter<argc;counter++){
+            switch(counter){
+                case 1:
+                    printf("\nnumber_of_keys argv[%d]: %s\n",counter,argv[counter]);
+                    number_of_keys=atoi(argv[counter]);
+                    break;
+                case 2:
+                    printf("\nkey_size argv[%d]: %s\n",counter,argv[counter]);
+                    key_size=atoi(argv[counter]);
+                    break;
+                case 3:
+                    printf("\nblocks argv[%d]: %s\n",counter,argv[counter]);
+                    blocks=atoi(argv[counter]);
+                    break;
+                case 4:
+                    printf("\nthreads_per_block argv[%d]: %s\n",counter,argv[counter]);
+                    thread_per_block=atoi(argv[counter]);
+                    break;
+                default:
+                    break;
+            }
+        }
+    } else {
+        printf("\nFind weak keys\nUsage:\n ./GCD_RSA number_of_keys key_size blocks threads_per_block\n");
+        return 0;
+    }
+
    //Solver config
     TGPUplan      plan[MAX_GPU_COUNT];
-    cudaError_t cudaStatus;
-
-
-    float sumGPU;
-    double sumCPU, diff;
 
     int i, j, gpuBase, GPU_N;
     unsigned planSum;
     unsigned sum=0;
-
     const int  BLOCK_N = 32;
     const int THREAD_N = 256;
-    const int  ACCUM_N = BLOCK_N * THREAD_N;
+    //const int  ACCUM_N = BLOCK_N * THREAD_N;
 
-    printf("Starting simpleMultiGPU\n");
     checkCudaErrors(cudaGetDeviceCount(&GPU_N));
 
     if (GPU_N > MAX_GPU_COUNT)
@@ -410,20 +442,20 @@ int main(void){
 
 
     U_BN tmp;
-    int L = ((KEY_SIZE / sizeof(unsigned))+1);
-    unsigned p, z;
-    unsigned k = 0, n = N;
+    int L = ((key_size / sizeof(unsigned))+1);
+    unsigned p;
+    unsigned k = 0;
     U_BN   *cu_PEMs;
     char *tmp_path;
     U_BN   *A, *B, *C;
 
-    unit_test();
-    CPU_computation();
+    //unit_test();
+    CPU_computation(number_of_keys, key_size);
 
     A    = (U_BN*)malloc(N*sizeof(U_BN));
     B    = (U_BN*)malloc(N*sizeof(U_BN));
     C    = (U_BN*)malloc(N*sizeof(U_BN));
-    cu_PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
+    cu_PEMs = (U_BN*)malloc(number_of_keys*sizeof(U_BN));
 
 
     for(i=0; i<N; i++){
@@ -453,15 +485,15 @@ int main(void){
 
     }
 
-    for(i=0; i<KEYS; i++){
+    for(i=0; i<number_of_keys; i++){
         cu_PEMs[i] = tmp;
-        asprintf(&tmp_path, "keys/%d.pem", (i+1));
+        asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
         get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
         //printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
     }
 
-    for(i=0, k=0; i<KEYS; i++){
-        for(j=(i+1); j<KEYS; j++, k++){
+    for(i=0, k=0; i<number_of_keys; i++){
+        for(j=(i+1); j<number_of_keys; j++, k++){
             A[k] = cu_PEMs[i];
             B[k] = cu_PEMs[j];
         }
@@ -573,7 +605,7 @@ int main(void){
         cudaFree(buffer);
 
         //Perform GPU computations
-        testKernel<<<BLOCK_N, THREAD_N, 0, plan[i].stream>>>(plan[i].device_U_BN_A, plan[i].device_U_BN_B, plan[i].device_U_BN_C, plan[i].dataN);
+        testKernel<<<blocks, thread_per_block, 0, plan[i].stream>>>(plan[i].device_U_BN_A, plan[i].device_U_BN_B, plan[i].device_U_BN_C, plan[i].dataN);
         //getLastCudaError("testKernel() execution failed.\n");
 
         checkCudaErrors(cudaMemcpyAsync(plan[i].h_C, plan[i].device_U_BN_C, plan[i].dataN *sizeof(U_BN), cudaMemcpyDeviceToHost, plan[i].stream));
@@ -594,6 +626,7 @@ int main(void){
     cudaPrintfDisplay(stdout, true);
     cudaPrintfEnd();
 
+    planSum=0;
     //Process GPU results
     for (i = 0; i < GPU_N; i++)
     {
@@ -604,12 +637,18 @@ int main(void){
 
         //Wait for all operations to finish
         cudaStreamSynchronize(plan[i].stream);
-
-        for (j = 0; j < plan[i].dataN; j++)
+        /*for (j = 0; j < plan[i].dataN; j++)
         {
-            if(plan[i].h_C[j].d[0]!=1)
+            if( plan[i].h_C[j].d[0]!=1 ){
+                printf("[GPU] : %u\n", plan[i].h_C[j].d[0]);
                 sum += 1;
+            }
+        }*/
+
+        for(k=planSum, p=0; k<(planSum+plan[i].dataN); p++, k++){
+            C[k] = plan[i].h_C[p];
         }
+        planSum+=plan[i].dataN;
 
 
         //Shut down this GPU
@@ -620,7 +659,15 @@ int main(void){
         checkCudaErrors(cudaStreamDestroy(plan[i].stream));
     }
 
-    printf("[GPU] Weak keys: %d\n", sum);
+    sum=0;
+    /*for (j = 0; j < N; j++){
+        if( C[j].d[0]!=1 ){
+            printf("[GPU] : %u\n", C[j].d[0]);
+            sum += 1;
+        }
+    }*/
+
+    //printf("[GPU] Weak keys: %d\n", sum);
 
     // Cleanup and shutdown
     for (i = 0; i < GPU_N; i++)
