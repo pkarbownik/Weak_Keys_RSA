@@ -49,10 +49,10 @@ typedef struct __U_BN__     U_BN;
 //# define CU_BN_MASK2l       (0xffffffffL)
 
 /************************32bit version*********************/
-#define cu_BN_zero(a)      (cu_BN_set_word((a),0))
-#define cu_BN_is_odd(a)        (((a)->top > 0) && ((a)->d[0] & 1))
-#define CU_BN_is_zero(a)       ((a)->top == 0)
-#define cu_BN_is_initialized() 
+#define cu_bn_zero(a)      (cu_bn_set_word((a),0))
+#define cu_bn_is_odd(a)        (((a)->top > 0) && ((a)->d[0] & 1))
+#define cu_bn_is_zero(a)       ((a)->top == 0)
+#define cu_bn_is_initialized() 
 #define CU_BN_BITS2        32
 #define CU_BN_BITS4        16
 #define CU_BN_BYTES        8
@@ -73,15 +73,15 @@ typedef struct __U_BN__     U_BN;
 
 //unsigned bn_mul_add_words(unsigned *rp, const unsigned *ap, int num, unsigned w);
 char *strrev(char *str);
-U_BN *cu_BN_new();
-void cu_BN_free(U_BN *a);
-int cu_BN_set_word(U_BN *a, unsigned w);
-int cu_BN_mul_word(U_BN *a, unsigned w);
-int cu_BN_add_word(U_BN *a, unsigned w);
-int cu_BN_dec2bn(U_BN * ret, const char *a);
-unsigned  cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
+U_BN *cu_bn_new();
+void cu_bn_free(U_BN *a);
+int cu_bn_set_word(U_BN *a, unsigned w);
+int cu_bn_mul_word(U_BN *a, unsigned w);
+int cu_bn_add_word(U_BN *a, unsigned w);
+int cu_bn_dec2bn(U_BN * ret, const char *a);
+unsigned  cu_bn_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
 char *cu_bn_bn2hex(const U_BN *a);
-int cu_BN_ucmp(const U_BN *a, const U_BN *b);
+int cu_bn_ucmp(const U_BN *a, const U_BN *b);
 long cu_long_abs(long number);
 int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *c);
 int cu_bn_num_bits_word(long l);
@@ -91,8 +91,8 @@ char *long2string(long number);
 char *string_num_add(const char *a, const char *b);
 char *string_num_add_long(const char *a, long b);
 int cu_bn_copy(U_BN *a, const  U_BN *b);
-int cu_BN_rshift1(U_BN *a);
-int cu_BN_lshift(U_BN *a, unsigned n);
+int cu_bn_rshift1(U_BN *a);
+int cu_bn_lshift(U_BN *a, unsigned n);
 U_BN *cu_euclid(U_BN *a, U_BN *b);
 int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn);
 U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b);

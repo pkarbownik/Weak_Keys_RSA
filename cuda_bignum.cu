@@ -18,7 +18,7 @@ char *strrev(char *str){
       return str;
 }
 
-U_BN *cu_BN_new(void)
+U_BN *cu_bn_new(void)
 {
     U_BN *ret;
 
@@ -30,7 +30,7 @@ U_BN *cu_BN_new(void)
     return (ret);
 }
 
-void cu_BN_free(U_BN *a)
+void cu_bn_free(U_BN *a)
 {
     if (a == NULL)
         return;
@@ -40,7 +40,7 @@ void cu_BN_free(U_BN *a)
         free(a);
 }
 
-unsigned cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w){
+unsigned cu_bn_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w){
 
     unsigned i=0;
     unsigned tmp;
@@ -74,7 +74,7 @@ unsigned cu_BN_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  
     return (new_p);
 }*/
 
-int cu_BN_mul_word(U_BN *a, unsigned w){
+int cu_bn_mul_word(U_BN *a, unsigned w){
 
     unsigned ll;
     if(NULL == a)
@@ -87,9 +87,9 @@ int cu_BN_mul_word(U_BN *a, unsigned w){
 
     if (a->top) {
         if (w == 0)
-            cu_BN_zero(a);
+            cu_bn_zero(a);
         else {
-            ll = cu_BN_mul_words(a->d, a->d, a->top, w);
+            ll = cu_bn_mul_words(a->d, a->d, a->top, w);
             if (ll) {
                 a->d = ((unsigned*)realloc(a->d, (++a->top)*sizeof(unsigned))); 
                 a->d[(a->top-1)] = ll;
@@ -102,7 +102,7 @@ int cu_BN_mul_word(U_BN *a, unsigned w){
 
 }
 
-int cu_BN_set_word(U_BN *a, unsigned w){
+int cu_bn_set_word(U_BN *a, unsigned w){
 
     if(NULL == a)
         return 0;
@@ -117,7 +117,7 @@ int cu_BN_set_word(U_BN *a, unsigned w){
 
 }
 
-int cu_BN_add_word(U_BN *a, unsigned w){
+int cu_bn_add_word(U_BN *a, unsigned w){
 
     unsigned l;
     int i;
@@ -135,8 +135,8 @@ int cu_BN_add_word(U_BN *a, unsigned w){
         return (1);
 
     /* degenerate case: a is zero */
-    if (CU_BN_is_zero(a))
-        return cu_BN_set_word(a, w);
+    if (cu_bn_is_zero(a))
+        return cu_bn_set_word(a, w);
 
     for (i = 0; i < a->top; i++) {
         a->d[i] = l = (a->d[i] + w) & CU_BN_MASK2;
@@ -151,7 +151,7 @@ int cu_BN_add_word(U_BN *a, unsigned w){
 
 }
 
-int cu_BN_dec2bn(U_BN *ret, const char *a){
+int cu_bn_dec2bn(U_BN *ret, const char *a){
 
     unsigned l;
     int j, i;
@@ -167,7 +167,7 @@ int cu_BN_dec2bn(U_BN *ret, const char *a){
     }
 
     if ('0'==*a)
-        return cu_BN_set_word(ret, 0);
+        return cu_bn_set_word(ret, 0);
 
     for (i = 0; i <= (INT_MAX/4) && isdigit((unsigned char)a[i]); i++)
         continue;
@@ -190,8 +190,8 @@ int cu_BN_dec2bn(U_BN *ret, const char *a){
         a++;
         if (++j == CU_BN_DEC_NUM) {
             //DEBUG_PRINT("l: %u\n", l);
-            cu_BN_mul_word(ret, CU_BN_DEC_CONV);
-            cu_BN_add_word(ret, l);
+            cu_bn_mul_word(ret, CU_BN_DEC_CONV);
+            cu_bn_add_word(ret, l);
             l = 0;
             j = 0;
         }
@@ -214,7 +214,7 @@ char *cu_bn_bn2hex(const U_BN *a){
     if(NULL == a->d)
         return 0;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
 
     buf = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top + 1));
@@ -236,7 +236,7 @@ char *cu_bn_bn2hex(const U_BN *a){
 
 }
 
-int cu_BN_ucmp(const U_BN *a, const U_BN *b){
+int cu_bn_ucmp(const U_BN *a, const U_BN *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -463,7 +463,7 @@ int cu_bn_num_bits(const U_BN *a){
 
     int i = a->top - 1;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
     return ((i * CU_BN_BITS2) + cu_bn_num_bits_word(a->d[i]));
 
@@ -527,7 +527,7 @@ char *string_num_add_long(const char *a, long word){
 
 }
 
-int cu_BN_rshift1(U_BN *a){
+int cu_bn_rshift1(U_BN *a){
 
     if(NULL == a)
         return 0;
@@ -535,7 +535,7 @@ int cu_BN_rshift1(U_BN *a){
     if(NULL == a->d)
         return 0;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
 
     unsigned *ap, *rp , t, c;
@@ -570,7 +570,7 @@ int cu_BN_rshift1(U_BN *a){
 
 }
 
-int cu_BN_lshift(U_BN *a, unsigned n){
+int cu_bn_lshift(U_BN *a, unsigned n){
 
     if(NULL == a)
         return 0;
@@ -578,7 +578,7 @@ int cu_BN_lshift(U_BN *a, unsigned n){
     if(NULL == a->d)
         return 0;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
 
     if (0 == n)
@@ -632,42 +632,42 @@ U_BN *cu_euclid(U_BN *a, U_BN *b){
 
     U_BN *t = NULL;
 
-    if (cu_BN_ucmp(a, b) < 0) {
+    if (cu_bn_ucmp(a, b) < 0) {
         t = a;
         a = b;
         b = t;
     }
 
     unsigned shifts = 0;
-    while (!CU_BN_is_zero(b)) {
-        if (cu_BN_is_odd(a)) {
-            if (cu_BN_is_odd(b)) {
+    while (!cu_bn_is_zero(b)) {
+        if (cu_bn_is_odd(a)) {
+            if (cu_bn_is_odd(b)) {
                 DEBUG_PRINT("b id odd, a is odd, a is equal: %s\n", cu_bn_bn2hex(a));
                 cu_bn_usub(a, b, a);
                 DEBUG_PRINT("b id odd, a is odd, a-b is equal: %s\n", cu_bn_bn2hex(a));
-                cu_BN_rshift1(a); // beacuse subtraction is even
+                cu_bn_rshift1(a); // beacuse subtraction is even
                 DEBUG_PRINT("b id odd, a is odd, a-b>>1 is equal: %s\n", cu_bn_bn2hex(a));
-                if (cu_BN_ucmp(a, b) < 0) {
+                if (cu_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {   
                 DEBUG_PRINT("b id even, b is equal: %s\n", cu_bn_bn2hex(b));
-                cu_BN_rshift1(b);
+                cu_bn_rshift1(b);
                 DEBUG_PRINT("b id even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
-                if (cu_BN_ucmp(a, b) < 0) {
+                if (cu_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             }
         } else {   
-            if (cu_BN_is_odd(b)) {
+            if (cu_bn_is_odd(b)) {
                 DEBUG_PRINT("a id even, b is odd, a is equal: %s\n", cu_bn_bn2hex(a));
-                cu_BN_rshift1(a);
+                cu_bn_rshift1(a);
                 DEBUG_PRINT("a id even, b is odd, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
-                if (cu_BN_ucmp(a, b) < 0) {
+                if (cu_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
@@ -675,9 +675,9 @@ U_BN *cu_euclid(U_BN *a, U_BN *b){
             } else {     
                 DEBUG_PRINT("a id even, b is even, a is equal: %s\n", cu_bn_bn2hex(a));
                 DEBUG_PRINT("a id even, b is even, b is equal: %s\n", cu_bn_bn2hex(b));
-                cu_BN_rshift1(a);
+                cu_bn_rshift1(a);
                 DEBUG_PRINT("a id even, b is even, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
-                cu_BN_rshift1(b);
+                cu_bn_rshift1(b);
                 DEBUG_PRINT("a id even, b is even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
                 shifts++;
             }
@@ -687,10 +687,10 @@ U_BN *cu_euclid(U_BN *a, U_BN *b){
     if (shifts) {
         DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
         DEBUG_PRINT("shifts is equal: %u\n", shifts);
-        cu_BN_lshift(a, shifts);
+        cu_bn_lshift(a, shifts);
         DEBUG_PRINT("a<<shifts is equal: %s\n", cu_bn_bn2hex(a));
     }
-    //cu_BN_free(t);
+    //cu_bn_free(t);
     return (a);
 
 }
@@ -719,7 +719,7 @@ int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn){
 U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     do {
-        if (cu_BN_ucmp(a, b) < 0) {
+        if (cu_bn_ucmp(a, b) < 0) {
             t = a;
             a = b;
             b = t;
@@ -730,16 +730,16 @@ U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b){
         DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
         DEBUG_PRINT("b is equal: %s\n", cu_bn_bn2hex(b));
         while(!(a->d[0]&1)) {
-            if(!cu_BN_rshift1(a)) break;
+            if(!cu_bn_rshift1(a)) break;
         }
-    } while (!CU_BN_is_zero(b));
+    } while (!cu_bn_is_zero(b));
     return (a);
 }
 
 U_BN *cu_classic_euclid(U_BN *a, U_BN *b){
 
-    while (cu_BN_ucmp(a, b) != 0) {
-        if (cu_BN_ucmp(a, b) > 0) {
+    while (cu_bn_ucmp(a, b) != 0) {
+        if (cu_bn_ucmp(a, b) > 0) {
             cu_bn_usub(a, b, a); 
         }
         else {
@@ -840,10 +840,10 @@ int cu_ubn_uadd(const U_BN *a, const U_BN *b, U_BN *r)
 U_BN *q_algorithm_PM(U_BN *a, U_BN *b){
     int q=0;
     U_BN *t = NULL;
-    while (!CU_BN_is_zero(b)) {
+    while (!cu_bn_is_zero(b)) {
         DEBUG_PRINT("q: %d b: %s\n", q, cu_bn_bn2hex(b));
-        while(!cu_BN_is_odd(b)){
-            cu_BN_rshift1(b);
+        while(!cu_bn_is_odd(b)){
+            cu_bn_rshift1(b);
             q++;
         }
         if(q >= 0) {
@@ -854,10 +854,10 @@ U_BN *q_algorithm_PM(U_BN *a, U_BN *b){
         }
         if((a->d[0]+b->d[0])&3==0) {
             cu_ubn_uadd(a, b, b);
-            cu_BN_rshift1(b);
+            cu_bn_rshift1(b);
         } else {
             cu_bn_usub(a, b, b);
-            cu_BN_rshift1(b);
+            cu_bn_rshift1(b);
         }
     }
     return (a);
@@ -867,10 +867,10 @@ U_BN *q_algorithm_PM(U_BN *a, U_BN *b){
 U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize){
     int beta=keysize, alfa=keysize, tmp;
     U_BN *t = NULL;
-    while (!CU_BN_is_zero(b)) {
+    while (!cu_bn_is_zero(b)) {
         //DEBUG_PRINT("b: %s\n", cu_bn_bn2hex(b));
-        while(!cu_BN_is_odd(b)){
-            cu_BN_rshift1(b);
+        while(!cu_bn_is_odd(b)){
+            cu_bn_rshift1(b);
             beta--;
         }
         if(alfa >= beta) {
@@ -884,10 +884,10 @@ U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize){
         }
         if((a->d[0]+b->d[0])&3==0) {
             cu_ubn_uadd(a, b, b);
-            cu_BN_rshift1(b);
+            cu_bn_rshift1(b);
         } else {
             cu_bn_usub(a, b, b);
-            cu_BN_rshift1(b);
+            cu_bn_rshift1(b);
         }
     }
     return (a);
@@ -900,16 +900,16 @@ U_BN *cu_approximate_euclid(U_BN *a, U_BN *b, unsigned keysize){
     do{
         if(beta==0){
             if(!(alfa&1)) alfa --;
-            cu_BN_mul_word(b, alfa);
+            cu_bn_mul_word(b, alfa);
             cu_bn_usub(a, b, a);
         } else {
             
         }
-    } while(!cu_BN_is_odd(b));
+    } while(!cu_bn_is_odd(b));
 
 
-    while (cu_BN_ucmp(a, b) != 0) {
-        if (cu_BN_ucmp(a, b) > 0) {
+    while (cu_bn_ucmp(a, b) != 0) {
+        if (cu_bn_ucmp(a, b) > 0) {
             cu_bn_usub(a, b, a); 
         }
         else {

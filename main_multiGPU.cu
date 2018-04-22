@@ -11,10 +11,7 @@
 // Data configuration
 ////////////////////////////////////////////////////////////////////////////////
 const int MAX_GPU_COUNT = 32;
-//#define N 4950
-#define KEYS 100
-#define KEY_SIZE 1024
-#define THREADS_PER_BLOCK 512
+
 
 #if __CUDA_ARCH__ < 200     //Compute capability 1.x architectures
 #define CUPRINTF cuPrintf
@@ -27,7 +24,7 @@ const int MAX_GPU_COUNT = 32;
 
 cudaError_t cudaStatus;
 
-__host__ __device__ int cu_dev_BN_ucmp(const U_BN *a, const U_BN *b){
+__host__ __device__ int cu_dev_bn_ucmp(const U_BN *a, const U_BN *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -151,7 +148,7 @@ __host__ __device__ int cu_dev_bn_rshift1(U_BN *a){
     if(NULL == a->d)
         return 0;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
 
     unsigned *ap, *rp , t, c;
@@ -185,7 +182,7 @@ __host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
     if(NULL == a->d)
         return 0;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
 
     if (0 == n)
@@ -226,34 +223,34 @@ __host__ __device__ U_BN *cu_dev_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     unsigned shifts = 0;
 
-    if (cu_dev_BN_ucmp(a, b) < 0) {
+    if (cu_dev_bn_ucmp(a, b) < 0) {
         t = a;
         a = b;
         b = t;
     }
 
-    while (!CU_BN_is_zero(b)) {
-        if (cu_BN_is_odd(a)) {
-            if (cu_BN_is_odd(b)) {
+    while (!cu_bn_is_zero(b)) {
+        if (cu_bn_is_odd(a)) {
+            if (cu_bn_is_odd(b)) {
                 cu_dev_bn_usub(a, b, a);
                 cu_dev_bn_rshift1(a);
-                if (cu_dev_BN_ucmp(a, b) < 0) {
+                if (cu_dev_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {      
                 cu_dev_bn_rshift1(b);
-                if (cu_dev_BN_ucmp(a, b) < 0) {
+                if (cu_dev_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             }
         } else {              
-            if (cu_BN_is_odd(b)) {
+            if (cu_bn_is_odd(b)) {
                 cu_dev_bn_rshift1(a);
-                if (cu_dev_BN_ucmp(a, b) < 0) {
+                if (cu_dev_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
@@ -277,7 +274,7 @@ __host__ __device__ U_BN *cu_dev_binary_euclid(U_BN *a, U_BN *b){
 __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     do {
-        if (cu_dev_BN_ucmp(a, b) < 0) {
+        if (cu_dev_bn_ucmp(a, b) < 0) {
             t = a;
             a = b;
             b = t;
@@ -286,14 +283,14 @@ __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
         while(!(a->d[0]&1)) {
             if(!cu_dev_bn_rshift1(a)) break;
         }
-    } while (!CU_BN_is_zero(b));
+    } while (!cu_bn_is_zero(b));
     return (a);
 }
 
 __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
 
-    while (cu_dev_BN_ucmp(a, b) != 0) {
-        if (cu_dev_BN_ucmp(a, b) > 0) {
+    while (cu_dev_bn_ucmp(a, b) != 0) {
+        if (cu_dev_bn_ucmp(a, b) > 0) {
             cu_dev_bn_usub(a, b, a); 
         }
         else {
@@ -305,7 +302,7 @@ __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
 
 }
 
-void CPU_computation(unsigned number_of_keys, unsigned key_size){
+void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_directory){
 
     U_BN tmp;
     unsigned sum=0;
@@ -330,7 +327,7 @@ void CPU_computation(unsigned number_of_keys, unsigned key_size){
 
     for(i=0; i<number_of_keys; i++){
 
-        asprintf(&tmp_path, "keys8192/%d.pem", (i+1));
+        asprintf(&tmp_path, "%s/%d.pem", keys_directory, (i+1));
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
             fprintf(stderr,"Cannot read \"public key\".\n");
         }
@@ -381,19 +378,21 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int n) {
         TMP = cu_dev_binary_euclid(&A[i], &B[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
         //TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
-        /*if(TMP->d[0]!=1) {
+        if(TMP->d[0]!=1) {
             cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
-        }*/
+        }
         C[i] = *TMP;
     }
 }
 
 int main(int argc, char* argv[]){
+
     unsigned number_of_keys;
     unsigned key_size;
     unsigned thread_per_block;
     unsigned blocks;
     unsigned number_of_comutations;
+    char *keys_directory;
     int counter;
     if(argc==5) {
         for(counter=0;counter<argc;counter++){
@@ -407,21 +406,22 @@ int main(int argc, char* argv[]){
                     key_size=atoi(argv[counter]);
                     break;
                 case 3:
-                    printf("\nblocks argv[%d]: %s\n",counter,argv[counter]);
-                    blocks=atoi(argv[counter]);
-                    break;
-                case 4:
                     printf("\nthreads_per_block argv[%d]: %s\n",counter,argv[counter]);
                     thread_per_block=atoi(argv[counter]);
+                    break;
+                case 4:
+                    printf("\nname of keys directory argv[%d]: %s\n",counter,argv[counter]);
+                    keys_directory=argv[counter];
                     break;
                 default:
                     break;
             }
         }
     } else {
-        printf("\nFind weak keys\nUsage:\n ./GCD_RSA number_of_keys key_size blocks threads_per_block\n");
+        printf("\nFind weak keys\nUsage:\n ./GCD_RSA number_of_keys key_size threads_per_block keys_directory_name\n");
         return 0;
     }
+
     // simplified binomial coefficient
     number_of_comutations=((number_of_keys/2)*(number_of_keys-1));
    //Solver config
@@ -430,9 +430,13 @@ int main(int argc, char* argv[]){
     int i, j, gpuBase, GPU_N;
     unsigned planSum;
     unsigned sum=0;
-    //const int  BLOCK_N = 32;
-    //const int THREAD_N = 256;
-    //const int  ACCUM_N = BLOCK_N * THREAD_N;
+    U_BN tmp;
+    int L = ((key_size / sizeof(unsigned))+1);
+    unsigned p;
+    unsigned k = 0;
+    U_BN   *cu_PEMs;
+    char *tmp_path;
+    U_BN   *A, *B, *C;
 
     checkCudaErrors(cudaGetDeviceCount(&GPU_N));
 
@@ -442,17 +446,8 @@ int main(int argc, char* argv[]){
     }
 
 
-
-    U_BN tmp;
-    int L = ((key_size / sizeof(unsigned))+1);
-    unsigned p;
-    unsigned k = 0;
-    U_BN   *cu_PEMs;
-    char *tmp_path;
-    U_BN   *A, *B, *C;
-
-    //unit_test();
-    CPU_computation(number_of_keys, key_size);
+    unit_test();
+    CPU_computation(number_of_keys, key_size, keys_directory);
 
     A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
     B    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
@@ -489,7 +484,7 @@ int main(int argc, char* argv[]){
 
     for(i=0; i<number_of_keys; i++){
         cu_PEMs[i] = tmp;
-        asprintf(&tmp_path, "keys8192/%d.pem", (i+1));
+        asprintf(&tmp_path, "%s/%d.pem", keys_directory, (i+1));
         get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
         //printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
     }

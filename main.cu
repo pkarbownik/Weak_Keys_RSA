@@ -19,7 +19,7 @@
                                   __VA_ARGS__)
 #endif
 
-__host__ __device__ int cu_dev_BN_ucmp(const U_BN *a, const U_BN *b){
+__host__ __device__ int cu_dev_bn_ucmp(const U_BN *a, const U_BN *b){
 
     int i;
     unsigned t1, t2, *ap, *bp;
@@ -143,7 +143,7 @@ __host__ __device__ int cu_dev_bn_rshift1(U_BN *a){
     if(NULL == a->d)
         return 0;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
 
     unsigned *ap, *rp , t, c;
@@ -177,7 +177,7 @@ __host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
     if(NULL == a->d)
         return 0;
 
-    if (CU_BN_is_zero(a))
+    if (cu_bn_is_zero(a))
         return 0;
 
     if (0 == n)
@@ -218,34 +218,34 @@ __host__ __device__ U_BN *cu_dev_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     unsigned shifts = 0;
 
-    if (cu_dev_BN_ucmp(a, b) < 0) {
+    if (cu_dev_bn_ucmp(a, b) < 0) {
         t = a;
         a = b;
         b = t;
     }
 
-    while (!CU_BN_is_zero(b)) {
-        if (cu_BN_is_odd(a)) {
-            if (cu_BN_is_odd(b)) {
+    while (!cu_bn_is_zero(b)) {
+        if (cu_bn_is_odd(a)) {
+            if (cu_bn_is_odd(b)) {
                 cu_dev_bn_usub(a, b, a);
                 cu_dev_bn_rshift1(a);
-                if (cu_dev_BN_ucmp(a, b) < 0) {
+                if (cu_dev_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {      
                 cu_dev_bn_rshift1(b);
-                if (cu_dev_BN_ucmp(a, b) < 0) {
+                if (cu_dev_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             }
         } else {              
-            if (cu_BN_is_odd(b)) {
+            if (cu_bn_is_odd(b)) {
                 cu_dev_bn_rshift1(a);
-                if (cu_dev_BN_ucmp(a, b) < 0) {
+                if (cu_dev_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
@@ -269,7 +269,7 @@ __host__ __device__ U_BN *cu_dev_binary_euclid(U_BN *a, U_BN *b){
 __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     do {
-        if (cu_dev_BN_ucmp(a, b) < 0) {
+        if (cu_dev_bn_ucmp(a, b) < 0) {
             t = a;
             a = b;
             b = t;
@@ -278,14 +278,14 @@ __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
         while(!(a->d[0]&1)) {
             if(!cu_dev_bn_rshift1(a)) break;
         }
-    } while (!CU_BN_is_zero(b));
+    } while (!cu_bn_is_zero(b));
     return (a);
 }
 
 __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
 
-    while (cu_dev_BN_ucmp(a, b) != 0) {
-        if (cu_dev_BN_ucmp(a, b) > 0) {
+    while (cu_dev_bn_ucmp(a, b) != 0) {
+        if (cu_dev_bn_ucmp(a, b) > 0) {
             cu_dev_bn_usub(a, b, a); 
         }
         else {
@@ -413,8 +413,8 @@ int main(void){
         B[i] = b;
         C[i] = c;
 
-        //cu_BN_dec2bn(&A[i], "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081");
-        //cu_BN_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
+        //cu_bn_dec2bn(&A[i], "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081");
+        //cu_bn_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
     }
 
     for(i=0; i<KEYS; i++){

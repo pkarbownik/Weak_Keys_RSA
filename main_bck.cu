@@ -45,7 +45,7 @@ typedef struct cu_bignum_st {
 /* This is used both by bn_expand2() and bn_dup_expand() */
 /* The caller MUST check that words > b->dmax before calling this */
 
-__device__ CU_BIGNUM *cu_BN_copy(CU_BIGNUM *a, const CU_BIGNUM *b)
+__device__ CU_BIGNUM *cu_bn_copy(CU_BIGNUM *a, const CU_BIGNUM *b)
 {
     int i;
     BN_ULONG *A;
@@ -218,23 +218,23 @@ __device__ int cu_GCD(CU_BIGNUM* A, CU_BIGNUM* B, CU_BIGNUM* C){
 	bn_check_top(A);
     bn_check_top(B);
 	if(BN_is_zero(A)) 
-		if (cu_BN_copy(C, B) == NULL)
+		if (cu_bn_copy(C, B) == NULL)
 			return 0;
 		else
 			return 1;
 	if(BN_is_zero(B)) 
-		if (cu_BN_copy(C, A) == NULL)
+		if (cu_bn_copy(C, A) == NULL)
 			return 0;
 		else
 			return 1;
 	while(!BN_is_zero(B)){
 		if(cu_comparision(A, B)>0){
 			cu_subtraction(A,B,C);
-			if (cu_BN_copy(A, C) == NULL)
+			if (cu_bn_copy(A, C) == NULL)
 				return 0;
 		} else {
 			cu_subtraction(B,A,C);
-			if (cu_BN_copy(B, C) == NULL)
+			if (cu_bn_copy(B, C) == NULL)
 				return 0;
 		}
 	}
