@@ -11,7 +11,7 @@
 // Data configuration
 ////////////////////////////////////////////////////////////////////////////////
 const int MAX_GPU_COUNT = 32;
-#define N 4950
+//#define N 4950
 #define KEYS 100
 #define KEY_SIZE 1024
 #define THREADS_PER_BLOCK 512
@@ -330,7 +330,7 @@ void CPU_computation(unsigned number_of_keys, unsigned key_size){
 
     for(i=0; i<number_of_keys; i++){
 
-        asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
+        asprintf(&tmp_path, "keys8192/%d.pem", (i+1));
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
             fprintf(stderr,"Cannot read \"public key\".\n");
         }
@@ -347,10 +347,10 @@ void CPU_computation(unsigned number_of_keys, unsigned key_size){
     for(i=0, k=0; i<number_of_keys; i++){
         for(j=(i+1); j<number_of_keys; j++, k++){
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
-            if(!BN_is_one(r)){
+            /*if(!BN_is_one(r)){
                 //printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
                 sum+=1;
-            }
+            }*/
         }
     }
     clock_t stop = clock();
@@ -381,9 +381,9 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int n) {
         TMP = cu_dev_binary_euclid(&A[i], &B[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
         //TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
-        if(TMP->d[0]!=1) {
+        /*if(TMP->d[0]!=1) {
             cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
-        }
+        }*/
         C[i] = *TMP;
     }
 }
@@ -393,6 +393,7 @@ int main(int argc, char* argv[]){
     unsigned key_size;
     unsigned thread_per_block;
     unsigned blocks;
+    unsigned number_of_comutations;
     int counter;
     if(argc==5) {
         for(counter=0;counter<argc;counter++){
@@ -421,15 +422,16 @@ int main(int argc, char* argv[]){
         printf("\nFind weak keys\nUsage:\n ./GCD_RSA number_of_keys key_size blocks threads_per_block\n");
         return 0;
     }
-
+    // simplified binomial coefficient
+    number_of_comutations=((number_of_keys/2)*(number_of_keys-1));
    //Solver config
-    TGPUplan      plan[MAX_GPU_COUNT];
+    TGPUplan plan[MAX_GPU_COUNT];
 
     int i, j, gpuBase, GPU_N;
     unsigned planSum;
     unsigned sum=0;
-    const int  BLOCK_N = 32;
-    const int THREAD_N = 256;
+    //const int  BLOCK_N = 32;
+    //const int THREAD_N = 256;
     //const int  ACCUM_N = BLOCK_N * THREAD_N;
 
     checkCudaErrors(cudaGetDeviceCount(&GPU_N));
@@ -452,13 +454,13 @@ int main(int argc, char* argv[]){
     //unit_test();
     CPU_computation(number_of_keys, key_size);
 
-    A    = (U_BN*)malloc(N*sizeof(U_BN));
-    B    = (U_BN*)malloc(N*sizeof(U_BN));
-    C    = (U_BN*)malloc(N*sizeof(U_BN));
+    A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
+    B    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
+    C    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
     cu_PEMs = (U_BN*)malloc(number_of_keys*sizeof(U_BN));
 
 
-    for(i=0; i<N; i++){
+    for(i=0; i<number_of_comutations; i++){
 
         U_BN a;
         U_BN b;
@@ -487,7 +489,7 @@ int main(int argc, char* argv[]){
 
     for(i=0; i<number_of_keys; i++){
         cu_PEMs[i] = tmp;
-        asprintf(&tmp_path, "keys_and_messages/%d.pem", (i+1));
+        asprintf(&tmp_path, "keys8192/%d.pem", (i+1));
         get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
         //printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
     }
@@ -503,11 +505,11 @@ int main(int argc, char* argv[]){
     //Get data sizes for each GPU
     for (i = 0; i < GPU_N; i++)
     {
-        plan[i].dataN = N / GPU_N;
+        plan[i].dataN = number_of_comutations / GPU_N;
     }
 
     //Take into account "odd" data sizes
-    for (i = 0; i < N % GPU_N; i++)
+    for (i = 0; i < number_of_comutations % GPU_N; i++)
     {
         plan[i].dataN++;
     }
@@ -605,7 +607,7 @@ int main(int argc, char* argv[]){
         cudaFree(buffer);
 
         //Perform GPU computations
-        testKernel<<<blocks, thread_per_block, 0, plan[i].stream>>>(plan[i].device_U_BN_A, plan[i].device_U_BN_B, plan[i].device_U_BN_C, plan[i].dataN);
+        testKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block, 0, plan[i].stream>>>(plan[i].device_U_BN_A, plan[i].device_U_BN_B, plan[i].device_U_BN_C, plan[i].dataN);
         //getLastCudaError("testKernel() execution failed.\n");
 
         checkCudaErrors(cudaMemcpyAsync(plan[i].h_C, plan[i].device_U_BN_C, plan[i].dataN *sizeof(U_BN), cudaMemcpyDeviceToHost, plan[i].stream));
@@ -660,7 +662,7 @@ int main(int argc, char* argv[]){
     }
 
     sum=0;
-    /*for (j = 0; j < N; j++){
+    /*for (j = 0; j < number_of_comutations; j++){
         if( C[j].d[0]!=1 ){
             printf("[GPU] : %u\n", C[j].d[0]);
             sum += 1;
