@@ -312,7 +312,7 @@ void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_dire
     FILE*     pemFile    = NULL;
     RSA* rsa;
     int i, j;
-    int L = ((key_size+7) / (8*sizeof(unsigned)));
+    int L = ((key_size+31) / (8*sizeof(unsigned)));
     unsigned k = 0;
     BIGNUM   *PEMs;
     char *tmp_path;
@@ -431,7 +431,7 @@ int main(int argc, char* argv[]){
     unsigned planSum;
     unsigned sum=0;
     U_BN tmp;
-    int L = ((key_size+7) / (8*sizeof(unsigned)));
+    int L = ((key_size+31) / (8*sizeof(unsigned)));
     unsigned p;
     unsigned k = 0;
     U_BN   *cu_PEMs;
