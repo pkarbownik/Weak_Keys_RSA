@@ -1,0 +1,1121 @@
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 32\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 32
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 176.888000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 996.249329ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 64\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 64
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 160.198000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 967.324524ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 96\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 96
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 158.024000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 969.564514ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 128\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 128
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 161.852000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 965.849121ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 160\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 160
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 170.644000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 972.514404ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 192\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 192
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 161.462000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 968.497986ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 224\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 224
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 161.393000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 968.174255ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 256\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 256
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 160.568000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 966.233704ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 288\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 288
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 159.364000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 966.716675ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 320\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 320
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 160.090000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 971.401306ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 352\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 352
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 157.880000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 979.050598ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 384\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 384
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 159.956000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 991.398132ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 416\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 416
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 159.640000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 967.185852ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 448\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 448
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 158.542000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 971.155396ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 480\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 480
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 160.033000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 965.436951ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 512\n blocks: \n threads: 512\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 512
+
+threads_per_block argv[3]: 512
+
+name of keys directory argv[4]: keys512
+[CPU] Time elapsed in ms: 167.116000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 967.415894ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 32\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 32
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 417.694000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2802.848633ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 64\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 64
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 417.557000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2675.798340ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 96\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 96
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 412.194000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2675.277344ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 128\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 128
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 418.353000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2671.312744ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 160\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 160
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 418.719000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2674.607422ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 192\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 192
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 418.496000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2674.412842ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 224\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 224
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 417.897000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2668.325684ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 256\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 256
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 417.542000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2673.523438ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 288\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 288
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 418.475000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2665.341553ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 320\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 320
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 419.261000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2662.307617ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 352\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 352
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 419.498000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2685.846436ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 384\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 384
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 422.923000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2751.395752ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 416\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 416
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 418.544000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2663.098389ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 448\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 448
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 418.876000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2668.076172ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 480\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 480
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 424.556000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2668.199219ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 1024\n blocks: \n threads: 512\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 1024
+
+threads_per_block argv[3]: 512
+
+name of keys directory argv[4]: keys1024
+[CPU] Time elapsed in ms: 421.574000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 2670.229980ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 32\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 32
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1219.932000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11557.704102ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 64\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 64
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1220.988000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11337.656250ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 96\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 96
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1211.710000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11370.179688ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 128\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 128
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1222.627000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11332.041016ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 160\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 160
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1231.034000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11367.164062ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 192\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 192
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1214.874000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11352.487305ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 224\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 224
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1221.728000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11356.979492ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 256\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 256
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1207.817000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11371.344727ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 288\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 288
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1220.798000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11370.083984ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 320\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 320
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1209.974000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11360.610352ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 352\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 352
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1232.723000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11439.184570ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 384\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 384
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1227.102000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11518.787109ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 416\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 416
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1227.963000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11359.653320ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 448\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 448
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1221.460000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11354.449219ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 480\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 480
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1235.734000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11347.462891ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 2048\n blocks: \n threads: 512\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 2048
+
+threads_per_block argv[3]: 512
+
+name of keys directory argv[4]: keys2048
+[CPU] Time elapsed in ms: 1229.647000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 11367.081055ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 32\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 32
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4000.618000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 44855.164062ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 64\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 64
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4005.362000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43800.390625ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 96\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 96
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4016.484000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43854.878906ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 128\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 128
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4032.034000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 44132.480469ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 160\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 160
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4008.051000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43946.562500ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 192\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 192
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4011.441000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43691.824219ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 224\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 224
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 3993.058000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43853.628906ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 256\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 256
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 3967.862000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43760.023438ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 288\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 288
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4011.631000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 45022.296875ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 320\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 320
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4005.444000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43811.613281ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 352\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 352
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4007.619000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 44142.457031ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 384\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 384
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4006.102000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 44366.933594ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 416\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 416
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 3998.565000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43678.296875ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 448\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 448
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 3992.993000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 44386.414062ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 480\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 480
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 4005.571000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43711.152344ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 4096\n blocks: \n threads: 512\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 4096
+
+threads_per_block argv[3]: 512
+
+name of keys directory argv[4]: keys4096
+[CPU] Time elapsed in ms: 3992.373000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 43722.285156ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 32\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 32
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14375.324000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 192214.718750ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 64\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 64
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14393.168000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 190165.906250ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 96\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 96
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14372.723000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 190633.843750ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 128\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 128
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14369.524000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 185528.375000ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 160\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 160
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14307.520000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 185711.375000ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 192\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 192
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14348.236000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 196854.640625ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 224\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 224
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14410.787000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 185299.203125ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 256\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 256
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14423.519000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 186819.421875ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 288\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 288
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14385.406000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 196165.625000ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 320\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 320
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14361.990000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 187736.640625ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 352\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 352
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14367.606000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 188157.781250ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 384\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 384
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14537.956000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 187453.859375ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 416\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 416
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14398.691000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 184894.156250ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 448\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 448
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14382.783000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 191256.046875ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 480\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 480
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14473.774000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 185415.875000ms
+***********************************************
+cpus: \n gpus: \n keys: 100\n key_size: 8192\n blocks: \n threads: 512\n
+
+number_of_keys argv[1]: 100
+
+key_size argv[2]: 8192
+
+threads_per_block argv[3]: 512
+
+name of keys directory argv[4]: keys8192
+[CPU] Time elapsed in ms: 14397.666000
+[CPU] Weak keys: 0
+Computing with 1 GPUs...
+[GPU] Time elapsed in ms 185955.062500ms
+**************DONE**************

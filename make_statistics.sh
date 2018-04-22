@@ -6,9 +6,9 @@ DIRECTORY="keys"
 	#do 
 		for (( keys=100; keys<=100; keys+=100 ))
 		do 
-			for (( key_size=512; key_size<=512; key_size++ ))
+			for (( key_size=512; key_size<=8192; key_size*=2 ))
 			do 
-				for (( threads=512; threads<=512; threads+=8 ))
+				for (( threads=32; threads<=512; threads+=32 ))
 				do 
 					echo "***********************************************"
 					echo "cpus: $cpus\n gpus: $gpus\n keys: $keys\n key_size: $key_size\n blocks: $blocks\n threads: $threads\n" 

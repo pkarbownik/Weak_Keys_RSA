@@ -312,7 +312,7 @@ void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_dire
     FILE*     pemFile    = NULL;
     RSA* rsa;
     int i, j;
-    int L = ((key_size / sizeof(unsigned))+1);
+    int L = ((key_size+7) / (8*sizeof(unsigned)));
     unsigned k = 0;
     BIGNUM   *PEMs;
     char *tmp_path;
@@ -344,10 +344,10 @@ void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_dire
     for(i=0, k=0; i<number_of_keys; i++){
         for(j=(i+1); j<number_of_keys; j++, k++){
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
-            /*if(!BN_is_one(r)){
+            if(!BN_is_one(r)){
                 //printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
                 sum+=1;
-            }*/
+            }
         }
     }
     clock_t stop = clock();
@@ -431,7 +431,7 @@ int main(int argc, char* argv[]){
     unsigned planSum;
     unsigned sum=0;
     U_BN tmp;
-    int L = ((key_size / sizeof(unsigned))+1);
+    int L = ((key_size+7) / (8*sizeof(unsigned)));
     unsigned p;
     unsigned k = 0;
     U_BN   *cu_PEMs;
@@ -446,7 +446,7 @@ int main(int argc, char* argv[]){
     }
 
 
-    unit_test();
+    //unit_test();
     CPU_computation(number_of_keys, key_size, keys_directory);
 
     A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
