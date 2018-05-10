@@ -297,21 +297,22 @@ __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
 
 }
 
-void CPU_computation(void){
+void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_directory){
 
     U_BN tmp;
+    unsigned sum=0;
     BIGNUM *r;
     BN_CTX *ctx;
     EVP_PKEY* pPubKey  = NULL;
     FILE*     pemFile    = NULL;
     RSA* rsa;
     int i, j;
-    int L = ((KEY_SIZE / sizeof(unsigned))+1);
+    int L = ((key_size+31) / (8*sizeof(unsigned)));
     unsigned k = 0;
     BIGNUM   *PEMs;
     char *tmp_path;
 
-    PEMs = (BIGNUM*)malloc(KEYS*sizeof(BIGNUM));
+    PEMs = (BIGNUM*)malloc(number_of_keys*sizeof(BIGNUM));
     tmp.d = (unsigned*)malloc(L*sizeof(unsigned));
     tmp.top = L;
 
@@ -319,9 +320,9 @@ void CPU_computation(void){
         tmp.d[j]=0;
     }
 
-    for(i=0; i<KEYS; i++){
+    for(i=0; i<number_of_keys; i++){
 
-        asprintf(&tmp_path, "keys/%d.pem", (i+1));
+        asprintf(&tmp_path, "%s/%d.pem", keys_directory, (i+1));
         if( !( (pemFile = fopen(tmp_path, "rt") ) && ( pPubKey = PEM_read_PUBKEY(pemFile,NULL,NULL,NULL) ) ) ) {
             fprintf(stderr,"Cannot read \"public key\".\n");
         }
@@ -335,17 +336,19 @@ void CPU_computation(void){
     ctx = BN_CTX_new();
     r=BN_new();
     clock_t start = clock();
-    for(i=0, k=0; i<KEYS; i++){
-        for(j=(i+1); j<KEYS; j++, k++){
+    for(i=0, k=0; i<number_of_keys; i++){
+        for(j=(i+1); j<number_of_keys; j++, k++){
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
-            /*if(!BN_is_one(r)){
-                printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
-            }*/
+            if(!BN_is_one(r)){
+                //printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
+                sum+=1;
+            }
         }
     }
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     printf("[CPU] Time elapsed in ms: %f\n", elapsed);
+    printf("[CPU] Weak keys: %u\n", sum);
     BN_CTX_free(ctx);
     BN_free(r);
 
@@ -359,19 +362,56 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
         //cu_dev_bn_rshift1(&A[i]);
         //cu_dev_bn_lshift(&A[i], 1);
         //cu_dev_bn_usub(&A[i],&B[i],TMP);
-        //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        TMP = cu_dev_binary_euclid(&A[i], &B[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
-        TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
+        //TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
         //if(TMP->d[0]!=1)
         //    cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
         C[i] = *TMP;
     }
 }
 
-int main(void){
+int main(int argc, char* argv[]){
+	
+    unsigned number_of_keys;
+    unsigned key_size;
+    unsigned thread_per_block;
+    unsigned number_of_comutations;
+    char *keys_directory;
+    int counter;
+    if(argc==5) {
+        for(counter=0;counter<argc;counter++){
+            switch(counter){
+                case 1:
+                    printf("\nnumber_of_keys argv[%d]: %s\n",counter,argv[counter]);
+                    number_of_keys=atoi(argv[counter]);
+                    break;
+                case 2:
+                    printf("\nkey_size argv[%d]: %s\n",counter,argv[counter]);
+                    key_size=atoi(argv[counter]);
+                    break;
+                case 3:
+                    printf("\nthreads_per_block argv[%d]: %s\n",counter,argv[counter]);
+                    thread_per_block=atoi(argv[counter]);
+                    break;
+                case 4:
+                    printf("\nname of keys directory argv[%d]: %s\n",counter,argv[counter]);
+                    keys_directory=argv[counter];
+                    break;
+                default:
+                    break;
+            }
+        }
+    } else {
+        printf("\nFind weak keys\nUsage:\n ./GCD_RSA number_of_keys key_size threads_per_block keys_directory_name\n");
+        return 0;
+    }
+
+    // simplified binomial coefficient
+    number_of_comutations=((number_of_keys/2)*(number_of_keys-1));
 
     U_BN tmp;
-    int L = ((KEY_SIZE / sizeof(unsigned))+1);
+    int L = ((key_size+31) / (8*sizeof(unsigned)));
     unsigned i, j;
     unsigned k = 0, n = N;
     U_BN   *A, *B, *C;
@@ -380,15 +420,16 @@ int main(void){
     char *tmp_path;
     cudaError_t cudaStatus;
 
-    unit_test();
-    CPU_computation();
+    //unit_test();
+    //CPU_computation(number_of_keys, key_size, keys_directory);
 
-    A    = (U_BN*)malloc(N*sizeof(U_BN));
-    B    = (U_BN*)malloc(N*sizeof(U_BN));
-    C    = (U_BN*)malloc(N*sizeof(U_BN));
-    cu_PEMs = (U_BN*)malloc(KEYS*sizeof(U_BN));
 
-    for(i=0; i<N; i++){
+    A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
+    B    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
+    C    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
+    cu_PEMs = (U_BN*)malloc(number_of_keys*sizeof(U_BN));
+
+    for(i=0; i<number_of_comutations; i++){
 
         U_BN a;
         U_BN b;
@@ -417,15 +458,15 @@ int main(void){
         //cu_bn_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
     }
 
-    for(i=0; i<KEYS; i++){
+    for(i=0; i<number_of_keys; i++){
         cu_PEMs[i] = tmp;
-        asprintf(&tmp_path, "keys/%d.pem", (i+1));
+        asprintf(&tmp_path, "%s/%d.pem", keys_directory, (i+1));
         get_u_bn_from_mod_PEM(tmp_path, &cu_PEMs[i]);
         //printf( "cu_PEM[%d]: %s\n", i, cu_bn_bn2hex(&cu_PEMs[i]));
     }
 
-    for(i=0, k=0; i<KEYS; i++){
-        for(j=(i+1); j<KEYS; j++, k++){
+    for(i=0, k=0; i<number_of_keys; i++){
+        for(j=(i+1); j<number_of_keys; j++, k++){
             A[k] = cu_PEMs[i];
             B[k] = cu_PEMs[j];
         }
@@ -434,16 +475,16 @@ int main(void){
 
 
     cudaDeviceReset();
-    cudaStatus = cudaMalloc((void**)&device_U_BN_A, N*sizeof(U_BN));    
-    cudaStatus = cudaMalloc((void**)&device_U_BN_B, N*sizeof(U_BN));
-    cudaStatus = cudaMalloc((void**)&device_U_BN_C, N*sizeof(U_BN));
-    cudaStatus = cudaMemcpy(device_U_BN_A, A, N*sizeof(U_BN), cudaMemcpyHostToDevice);
-    cudaStatus = cudaMemcpy(device_U_BN_B, B, N*sizeof(U_BN), cudaMemcpyHostToDevice);
-    cudaStatus = cudaMemcpy(device_U_BN_C, C, N*sizeof(U_BN), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMalloc((void**)&device_U_BN_A, number_of_comutations*sizeof(U_BN));    
+    cudaStatus = cudaMalloc((void**)&device_U_BN_B, number_of_comutations*sizeof(U_BN));
+    cudaStatus = cudaMalloc((void**)&device_U_BN_C, number_of_comutations*sizeof(U_BN));
+    cudaStatus = cudaMemcpy(device_U_BN_A, A, number_of_comutations*sizeof(U_BN), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(device_U_BN_B, B, number_of_comutations*sizeof(U_BN), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(device_U_BN_C, C, number_of_comutations*sizeof(U_BN), cudaMemcpyHostToDevice);
 
     unsigned long *out;
 
-    for(i = 0; i < N; i++) {
+    for(i = 0; i < number_of_comutations; i++) {
 
         cudaMalloc(&out, L*sizeof(unsigned));
         cudaMemcpy(out, A[i].d, L*sizeof(unsigned), cudaMemcpyHostToDevice);
@@ -464,7 +505,7 @@ int main(void){
     cudaEventCreate(&stop);
     cudaEventRecord(start, 0);
 
-    testKernel<<<((N + THREADS_PER_BLOCK -1)/THREADS_PER_BLOCK), THREADS_PER_BLOCK>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, n);
+    testKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, n);
 
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
@@ -480,13 +521,13 @@ int main(void){
         return 1;
     }
 
-    cudaStatus = cudaMemcpy(A, device_U_BN_A, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
-    cudaStatus = cudaMemcpy(B, device_U_BN_B, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
-    cudaStatus = cudaMemcpy(C, device_U_BN_C, N*sizeof(U_BN), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(A, device_U_BN_A, number_of_comutations*sizeof(U_BN), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(B, device_U_BN_B, number_of_comutations*sizeof(U_BN), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(C, device_U_BN_C, number_of_comutations*sizeof(U_BN), cudaMemcpyDeviceToHost);
 
     unsigned *array = (unsigned*)malloc(L*sizeof(unsigned));
 
-    for(i = 0; i < N; ++i) {
+    for(i = 0; i < number_of_comutations; ++i) {
         array = (unsigned*)malloc(L*sizeof(unsigned));
         cudaMemcpy(array, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
         A[i].d = array;

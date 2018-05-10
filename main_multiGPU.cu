@@ -367,9 +367,23 @@ int checkCudaErrors(cudaError_t cudaStatus){
     return 0;
 }
 
-__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int n) {
+__global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int n, int L) {
     int i= blockIdx.x * blockDim.x + threadIdx.x;
+    int index, p;
     U_BN *TMP=NULL;
+    /*__shared__ U_BN *local_A;
+    __shared__ U_BN *local_B;
+    local_A=&A[i];
+    local_B=&B[i];
+
+    for(p=0;p<L;p++){
+        local_A->d[p]=A[i].d[p];
+        local_B->d[p]=B[i].d[p];
+    }
+
+    local_A->top = A[i].top;
+    local_B->top = B[i].top;*/
+
 
     if(i<n){
         //cu_dev_bn_rshift1(&A[i]);
@@ -602,7 +616,7 @@ int main(int argc, char* argv[]){
         cudaFree(buffer);
 
         //Perform GPU computations
-        testKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block, 0, plan[i].stream>>>(plan[i].device_U_BN_A, plan[i].device_U_BN_B, plan[i].device_U_BN_C, plan[i].dataN);
+        testKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block, 0, plan[i].stream>>>(plan[i].device_U_BN_A, plan[i].device_U_BN_B, plan[i].device_U_BN_C, plan[i].dataN, L);
         //getLastCudaError("testKernel() execution failed.\n");
 
         checkCudaErrors(cudaMemcpyAsync(plan[i].h_C, plan[i].device_U_BN_C, plan[i].dataN *sizeof(U_BN), cudaMemcpyDeviceToHost, plan[i].stream));
