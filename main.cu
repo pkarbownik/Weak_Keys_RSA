@@ -5,10 +5,6 @@
 #include <time.h>
 //#include <openssl/bn.h>
 
-#define N 490500
-#define KEYS 1000
-#define KEY_SIZE 1024
-#define THREADS_PER_BLOCK 512
 
 #if __CUDA_ARCH__ < 200     //Compute capability 1.x architectures
 #define CUPRINTF cuPrintf
@@ -362,11 +358,11 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
         //cu_dev_bn_rshift1(&A[i]);
         //cu_dev_bn_lshift(&A[i], 1);
         //cu_dev_bn_usub(&A[i],&B[i],TMP);
-        TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
-        //TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
-        //if(TMP->d[0]!=1)
-        //    cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
+        TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
+        if(TMP->d[0]!=1)
+            cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
         C[i] = *TMP;
     }
 }
@@ -413,7 +409,7 @@ int main(int argc, char* argv[]){
     U_BN tmp;
     int L = ((key_size+31) / (8*sizeof(unsigned)));
     unsigned i, j;
-    unsigned k = 0, n = N;
+    unsigned k = 0;
     U_BN   *A, *B, *C;
     U_BN   *device_U_BN_A, *device_U_BN_B, *device_U_BN_C;
     U_BN   *cu_PEMs;
@@ -421,7 +417,7 @@ int main(int argc, char* argv[]){
     cudaError_t cudaStatus;
 
     //unit_test();
-    //CPU_computation(number_of_keys, key_size, keys_directory);
+    CPU_computation(number_of_keys, key_size, keys_directory);
 
 
     A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
@@ -454,8 +450,6 @@ int main(int argc, char* argv[]){
         B[i] = b;
         C[i] = c;
 
-        //cu_bn_dec2bn(&A[i], "132009813808533392577123110438741884286561400398429860761027919959189196549797215586297852825375342475728679074489933320371765026814849875692023263110656924146683347962741534495754902097930935910070831755220321417369411370818762253940133993629997648473607090782039210687337530507010114741418840031542303031081");
-        //cu_bn_dec2bn(&B[i], "135472400918611757666622822789636901038207639581474006488496906937544113899819968264216470405393313301250508761651903965883874352772699986982247519612608840409853757718079903608120168842687889231898954817245684707914621259848016658887023606975529849256590875282759156328281549546230980205644358325222571914637");
     }
 
     for(i=0; i<number_of_keys; i++){
@@ -505,7 +499,7 @@ int main(int argc, char* argv[]){
     cudaEventCreate(&stop);
     cudaEventRecord(start, 0);
 
-    testKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, n);
+    testKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, number_of_comutations);
 
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);

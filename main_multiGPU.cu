@@ -389,12 +389,12 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, int n, int L) {
         //cu_dev_bn_rshift1(&A[i]);
         //cu_dev_bn_lshift(&A[i], 1);
         //cu_dev_bn_usub(&A[i],&B[i],TMP);
-        TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
-        //TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
-        if(TMP->d[0]!=1) {
-            cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
-        }
+        TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
+        //if(TMP->d[0]!=1) {
+        //    cuPrintf("testKernel entrance by the global threadIdx= %d \n", i);
+        //}
         C[i] = *TMP;
     }
 }

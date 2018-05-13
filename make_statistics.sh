@@ -8,13 +8,12 @@ DIRECTORY="keys"
 		do 
 			for (( key_size=1024; key_size<=1024; key_size+=2 ))
 			do 
-				for (( threads=8; threads<=512; threads*=2 ))
+				for (( threads=512; threads<=512; threads*=2 ))
 				do 
 					echo "***********************************************"
-					echo "cpus: $cpus\n gpus: $gpus\n keys: $keys\n key_size: $key_size\n blocks: $blocks\n threads: $threads\n" 
+					echo "GCD_RSA_classic cpus: $cpus\n gpus: $gpus\n keys: $keys\n key_size: $key_size\n blocks: $blocks\n threads: $threads\n" 
 					#srun -p plgrid-gpu -t 00:30:00 -N 1 --cpus-per-task=$cpus --gres=gpu:$gpus  -A plgpkarbownik2017a ./GCD_RSA  $keys $key_size $threads $DIRECTORY$key_size
-					./GCD_RSA $keys $key_size $threads $DIRECTORY
-
+					./GCD_RSA_classic $keys $key_size $threads $DIRECTORY
 				done
 			done
 		done
