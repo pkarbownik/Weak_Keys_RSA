@@ -167,7 +167,7 @@ __host__ __device__ int cu_dev_bn_rshift1(U_BN *a){
 
 __host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
 
-    if(NULL == a)
+  if(NULL == a)
         return 0;
 
     if(NULL == a->d)
@@ -188,23 +188,23 @@ __host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
     rb = (CU_BN_BITS2 - lb);
 
     l=a->d[a->top-1];
-
-    if( (l >> rb) > 0 ) nwb = 1;
-
-    if (lb == 0 && nw != 0 ){
+    if( ((l << lb)%CU_BN_BITS2) > 0 ) nwb = 1;
+    if (lb == 0)
         for (i = a->top - 1; i >= 0; i--){
             a->d[nw + i] = a->d[i];
         }
-    } else {
-        for (i = 0; i < (a->top + nw + nwb); i++) {
+    else
+        for (i = a->top - 1; i >= 0; i--) {
             l = a->d[i];
-            a->d[i] = (l << lb) | c;
-            c = (l >> rb);
-
+            a->d[nw + i + 1] |= (l >> rb) & CU_BN_MASK2;
+            a->d[nw + i] = (l << lb) & CU_BN_MASK2;
         }
 
-    }
+
     a->top += (nw + nwb);
+    char *buffer=NULL;
+    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
+    free(buffer);
     return (1);
 
 }
@@ -417,7 +417,7 @@ int main(int argc, char* argv[]){
     cudaError_t cudaStatus;
 
     //unit_test();
-    CPU_computation(number_of_keys, key_size, keys_directory);
+    //CPU_computation(number_of_keys, key_size, keys_directory);
 
 
     A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
@@ -468,7 +468,7 @@ int main(int argc, char* argv[]){
 
 
 
-    cudaDeviceReset();
+    /*cudaDeviceReset();
     cudaStatus = cudaMalloc((void**)&device_U_BN_A, number_of_comutations*sizeof(U_BN));    
     cudaStatus = cudaMalloc((void**)&device_U_BN_B, number_of_comutations*sizeof(U_BN));
     cudaStatus = cudaMalloc((void**)&device_U_BN_C, number_of_comutations*sizeof(U_BN));
@@ -538,20 +538,37 @@ int main(int argc, char* argv[]){
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "\n testKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return 1;
-    }
+    }*/
 
-    /*for(i=0, k=0; i<KEYS; i++){
-        for(j=(i+1); j<KEYS; j++, k++){
-            if( strcmp( "1", cu_bn_bn2hex(&C[k]))){
-                printf("i: %d, j: %d, C[%d]: %s\n", j, i, k, cu_bn_bn2hex(&C[k]));
+    C = cu_classic_euclid(&A[i], &B[i]);
+
+    /*char *buffer=NULL;
+    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * C->top));
+    for(i=0, k=0; i<number_of_keys; i++){
+        for(j=(i+1); j<number_of_keys; j++, k++){
+            if( !strcmp( "1", cu_bn_bn2hex(&C[k],buffer))){
+                //printf("i: %d, j: %d, C[%d]: %s\n", j, i, k, cu_bn_bn2hex(&C[k]));
+            	printf("1");
             }
         }
-    }*/
-    cudaFree(out);
-    free(array);
-    cudaFree(device_U_BN_A);
-    cudaFree(device_U_BN_B);
-    cudaFree(device_U_BN_C);
+    }
+    free(buffer);*/
+    //cudaFree(out);
+    //free(array);
+    //cudaFree(device_U_BN_A);
+    //cudaFree(device_U_BN_B);
+    //cudaFree(device_U_BN_C);
 
+
+    /*for(i=0; i<number_of_comutations; i++){
+        free(A[i].d);
+        free(B[i].d);
+        free(C[i].d);
+    }*/
+
+    free(A);
+    free(B);
+    free(C);
+    free(cu_PEMs);
     return (0);
 }

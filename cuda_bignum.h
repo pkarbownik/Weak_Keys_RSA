@@ -11,7 +11,7 @@
 #include <ctype.h>
 #include "cuda_runtime.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if defined(DEBUG) && DEBUG > 0
  #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
@@ -80,7 +80,7 @@ int cu_bn_mul_word(U_BN *a, unsigned w);
 int cu_bn_add_word(U_BN *a, unsigned w);
 int cu_bn_dec2bn(U_BN * ret, const char *a);
 unsigned  cu_bn_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
-char *cu_bn_bn2hex(const U_BN *a);
+char *cu_bn_bn2hex(const U_BN *a, char *buffer);
 int cu_bn_ucmp(const U_BN *a, const U_BN *b);
 long cu_long_abs(long number);
 int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *c);
@@ -93,7 +93,7 @@ char *string_num_add_long(const char *a, long b);
 int cu_bn_copy(U_BN *a, const  U_BN *b);
 int cu_bn_rshift1(U_BN *a);
 int cu_bn_lshift(U_BN *a, unsigned n);
-U_BN *cu_euclid(U_BN *a, U_BN *b);
+U_BN *cu_binary_gcd(U_BN *a, U_BN *b);
 int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn);
 U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b);
 U_BN *cu_classic_euclid(U_BN *a, U_BN *b);

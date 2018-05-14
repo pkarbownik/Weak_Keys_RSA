@@ -40,7 +40,7 @@ void string_num_add_long_test(void);
 void cu_bn_copy_test(void);
 void cu_bn_rshift1_test(void);
 void cu_bn_lshift_test(void);
-void cu_euclid_test(void);
+void cu_binary_gcd_test(void);
 void bignum2u_bn_test(void);
 void get_u_bn_from_mod_PEM_test(void);
 void cu_fast_binary_euclid_test(void);
