@@ -202,15 +202,12 @@ __host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
 
 
     a->top += (nw + nwb);
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
-    free(buffer);
     return (1);
 
 }
 
 
-__host__ __device__ U_BN *cu_dev_binary_euclid(U_BN *a, U_BN *b){
+__host__ __device__ U_BN *cu_dev_binary_gcd(U_BN *a, U_BN *b){
     U_BN *t = NULL;
     unsigned shifts = 0;
 
@@ -335,10 +332,10 @@ void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_dire
     for(i=0, k=0; i<number_of_keys; i++){
         for(j=(i+1); j<number_of_keys; j++, k++){
             BN_gcd(r, &PEMs[i], &PEMs[j], ctx);
-            if(!BN_is_one(r)){
+            /*if(!BN_is_one(r)){
                 //printf( "A[%d]: %s\nB[%d]: %s\neuclid: %s\n\n", i, BN_bn2hex(&PEMs[i]), j, BN_bn2hex(&PEMs[j]), BN_bn2hex(r));
                 sum+=1;
-            }
+            }*/
         }
     }
     clock_t stop = clock();
@@ -358,7 +355,7 @@ __global__ void testKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
         //cu_dev_bn_rshift1(&A[i]);
         //cu_dev_bn_lshift(&A[i], 1);
         //cu_dev_bn_usub(&A[i],&B[i],TMP);
-        //TMP = cu_dev_binary_euclid(&A[i], &B[i]);
+        //TMP = cu_dev_binary_gcd(&A[i], &B[i]);
         //TMP = cu_dev_classic_euclid(&A[i], &B[i]);
         TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
         if(TMP->d[0]!=1)
@@ -408,16 +405,16 @@ int main(int argc, char* argv[]){
 
     U_BN tmp;
     int L = ((key_size+31) / (8*sizeof(unsigned)));
-    unsigned i, j;
-    unsigned k = 0;
+    unsigned i, j, sum = 0;
+    unsigned k = 0, l=0;
     U_BN   *A, *B, *C;
     U_BN   *device_U_BN_A, *device_U_BN_B, *device_U_BN_C;
     U_BN   *cu_PEMs;
     char *tmp_path;
     cudaError_t cudaStatus;
 
-    //unit_test();
-    //CPU_computation(number_of_keys, key_size, keys_directory);
+    unit_test();
+    CPU_computation(number_of_keys, key_size, keys_directory);
 
 
     A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
@@ -430,12 +427,15 @@ int main(int argc, char* argv[]){
         U_BN a;
         U_BN b;
         U_BN c;
+        U_BN d;
         a.d = (unsigned*)malloc(L*sizeof(unsigned));
         b.d = (unsigned*)malloc(L*sizeof(unsigned));
         c.d = (unsigned*)malloc(L*sizeof(unsigned));
+        d.d = (unsigned*)malloc(L*sizeof(unsigned));
         a.top =   L;
         b.top =   L;
         c.top =   L;
+        d.top =   L;
 
         for(j=0; j<L; j++)
             a.d[j]=0;
@@ -446,9 +446,26 @@ int main(int argc, char* argv[]){
         for(j=0; j<L; j++)
             c.d[j]=0;
 
+        for(j=0; j<L; j++)
+            c.d[j]=0;
+
         A[i] = a;
         B[i] = b;
         C[i] = c;
+        C[i] = d;
+
+    }
+
+    for(i=0; i<number_of_keys; i++){
+
+        U_BN d;
+        d.d = (unsigned*)malloc(L*sizeof(unsigned));
+        d.top =   L;
+
+        for(j=0; j<L; j++)
+            d.d[j]=0;
+
+        cu_PEMs[i] = d;
 
     }
 
@@ -461,8 +478,12 @@ int main(int argc, char* argv[]){
 
     for(i=0, k=0; i<number_of_keys; i++){
         for(j=(i+1); j<number_of_keys; j++, k++){
-            A[k] = cu_PEMs[i];
-            B[k] = cu_PEMs[j];
+            A[k].top = cu_PEMs[i].top;
+            B[k].top = cu_PEMs[j].top;
+            for(l=0;l<L;l++){
+                A[k].d[l] = cu_PEMs[i].d[l];
+                B[k].d[l] = cu_PEMs[j].d[l];
+            }
         }
     }
 
@@ -540,19 +561,24 @@ int main(int argc, char* argv[]){
         return 1;
     }*/
 
-    C = cu_classic_euclid(&A[i], &B[i]);
-
-    /*char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * C->top));
+    clock_t start = clock();
     for(i=0, k=0; i<number_of_keys; i++){
         for(j=(i+1); j<number_of_keys; j++, k++){
-            if( !strcmp( "1", cu_bn_bn2hex(&C[k],buffer))){
+            /*if( strcmp( "1", cu_bn_bn2hex(cu_binary_gcd(&A[k], &B[k])))){
+                //printf( "[%d]: %u\n", k, C[k].d[0]);
                 //printf("i: %d, j: %d, C[%d]: %s\n", j, i, k, cu_bn_bn2hex(&C[k]));
-            	printf("1");
-            }
+                sum+=1;
+            }*/
+            //printf("C[%d]: %s\n", k, cu_bn_bn2hex(cu_fast_binary_euclid(&A[k], &B[k])));
+            cu_binary_gcd(&A[k], &B[k]);
         }
     }
-    free(buffer);*/
+    clock_t stop = clock();
+    double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
+    printf("[CPU] Time elapsed in ms: %f\n", elapsed);
+    printf("[CPU] Weak keys: %d\n", sum);
+
+
     //cudaFree(out);
     //free(array);
     //cudaFree(device_U_BN_A);
@@ -568,7 +594,7 @@ int main(int argc, char* argv[]){
 
     free(A);
     free(B);
-    free(C);
+    //free(C);
     free(cu_PEMs);
     return (0);
 }

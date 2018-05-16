@@ -1,3 +1,4 @@
+
 #include "test.h"
 
 void unit_test(void){
@@ -21,16 +22,16 @@ void unit_test(void){
 	number_of_digits_test();
 	//long2string_test();
 	//string_num_add_long_test();
-	cu_bn_rshift1_test();
-	cu_bn_lshift_test();
+	//cu_bn_rshift1_test();
+	//cu_bn_lshift_test();
 	cu_binary_gcd_test();
 	//bignum2u_bn_test();
 	get_u_bn_from_mod_PEM_test();
 	cu_fast_binary_euclid_test();
 	cu_classic_euclid_test();
-	//cu_ubn_copy_test();
-	//cu_ubn_uadd_test();
-	//cu_ubn_add_words_test();
+	cu_ubn_copy_test();
+	cu_ubn_uadd_test();
+	cu_ubn_add_words_test();
 	//algorithm_PM_test();
 	//q_algorithm_PM_test();
 	INFO("tests completed\n");
@@ -153,12 +154,9 @@ void cu_bn_dec2bn_test(void){
 void cu_bn_bn2hex_test(void){ 
 	U_BN   *A = NULL;
 	A = cu_bn_new();
-    char *buffer=NULL;
 	assert(1==cu_bn_dec2bn(A, "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171722437841965806707802420698885993409903878055377635362821711101383838163609674216891593551006179966415573764558448444491910741"));
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * A->top));
-	assert(!strcmp("B57C67BE98C25867E0439BBE80836E5B5DC041A40064199A674299D24E8704B82432A79FE534D545745D1096235150B9F1A0AFA90FC54406AC51FB3918B187FD886CD43F33842D6BDB1602097543E2C65683DFFD58EBE7920DF7C23AC0A827503FF0310B31B8D075B168C5FAA3F4055153771D47401AB8BE0EF613F3D0DF4E55", cu_bn_bn2hex(A, buffer)));
+	assert(!strcmp("B57C67BE98C25867E0439BBE80836E5B5DC041A40064199A674299D24E8704B82432A79FE534D545745D1096235150B9F1A0AFA90FC54406AC51FB3918B187FD886CD43F33842D6BDB1602097543E2C65683DFFD58EBE7920DF7C23AC0A827503FF0310B31B8D075B168C5FAA3F4055153771D47401AB8BE0EF613F3D0DF4E55", cu_bn_bn2hex(A)));
 	cu_bn_free(A);
-	free(buffer);
 	INFO("Test passed\n");
 }
 
@@ -185,6 +183,7 @@ void cu_long_abs_test(void){
 void cu_bn_usub_test(void){
 	U_BN   *A = NULL, *B = NULL;
 	U_BN   *C = NULL;
+	int i=0;
 	A = cu_bn_new();
 	B = cu_bn_new();
 	C = cu_bn_new();
@@ -196,10 +195,7 @@ void cu_bn_usub_test(void){
 	clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     INFO("[CPU - usub] Time elapsed in ms: %f\n", elapsed);
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * C->top));
-	assert(!strcmp("1", cu_bn_bn2hex(C,buffer)));
-	free(buffer);
+	assert(!strcmp("1", cu_bn_bn2hex(C)));
 	cu_bn_free(A);
 	cu_bn_free(B);
 	cu_bn_free(C);
@@ -220,10 +216,7 @@ void cu_bn_usub_optimized_test(void){
 	clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     INFO("[CPU - usub] Time elapsed in ms: %f\n", elapsed);
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * C->top));
-	assert(!strcmp("1", cu_bn_bn2hex(C,buffer)));
-	free(buffer);
+	assert(!strcmp("1", cu_bn_bn2hex(C)));
 	cu_bn_free(A);
 	cu_bn_free(B);
 	cu_bn_free(C);
@@ -272,42 +265,32 @@ void cu_bn_rshift1_test(void){
 	BIGNUM* ref = NULL;
 	W = cu_bn_new();
 	ref = BN_new();
-	assert(1 == cu_bn_dec2bn(W, "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703"));
-	assert(1 < BN_dec2bn(&ref, "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703"));
+	assert(1 == cu_bn_dec2bn(W, "1362696363172158686581267261425432420281286797872015136213774202996443592471511578857935772165436898929889359867140"));
+	assert(1 < BN_dec2bn(&ref, "1362696363172158686581267261425432420281286797872015136213774202996443592471511578857935772165436898929889359867140"));
 	assert(1 == cu_bn_rshift1(W));
 	assert(1 == BN_rshift1(ref, ref));
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * W->top));
-	//INFO("rshift_BIGNUM: %s\n", BN_bn2hex(ref));
-	assert(!strcmp(BN_bn2hex(ref), cu_bn_bn2hex(W,buffer)));
+	INFO("rshift_BIGNUM: %s\n", BN_bn2hex(ref));
+	INFO("rshift_U_BN: %s\n", cu_bn_bn2hex(W));
+	assert(!strcmp(BN_bn2hex(ref), cu_bn_bn2hex(W)));
 	cu_bn_free(W);
 	BN_free(ref);
-    free(buffer);
 	INFO("Test passed\n");
 }
 
 void cu_bn_lshift_test(void){
 	U_BN   *W = NULL;
 	BIGNUM* ref = NULL;
-	unsigned i;
 	W = cu_bn_new();
 	ref = BN_new();
-	assert(1 == cu_bn_dec2bn(W, "2605373001747823453159168096513849942016934289567778682"));
-	assert(1 < BN_dec2bn(&ref, "2605373001747823453159168096513849942016934289567778682"));
-	assert(1 == cu_bn_lshift(W, 7));
-	assert(1 == BN_lshift(ref, ref, 7));
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * W->top));
+	assert(1 == cu_bn_dec2bn(W, "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703"));
+	assert(1 < BN_dec2bn(&ref, "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703"));
+	assert(1 == cu_bn_lshift(W, 10));
+	assert(1 == BN_lshift(ref, ref, 10));
 	INFO("lshift_BIGNUM: %s\n", BN_bn2hex(ref));
-	INFO("%s=%s\n", BN_bn2hex(ref), cu_bn_bn2hex(W, buffer));
-	for(i=0; i<W->top; i++){
-		INFO("W->d[%u]=%u\n", i, W->d[i]);
-		INFO("ref->d[%u]=%lu\n", i, ref->d[i]);
-	}
-	//assert(!strcmp(BN_bn2hex(ref), cu_bn_bn2hex(W, buffer)));
+	INFO("lshift_U_BN: %s\n", cu_bn_bn2hex(W));
+	assert(!strcmp(BN_bn2hex(ref), cu_bn_bn2hex(W)));
 	cu_bn_free(W);
 	BN_free(ref);
-    free(buffer);
 	INFO("Test passed\n");
 }
 
@@ -332,13 +315,10 @@ void cu_binary_gcd_test(void){
         b.d = (unsigned*)malloc(L*sizeof(unsigned));
         a.top =   L;
         b.top =   L;
-
         for(int j=0; j<L; j++)
             a.d[j]=0;
-
         for(int j=0; j<L; j++)
             b.d[j]=0;
-
         A[i] = a;
         B[i] = b;
     }*/
@@ -361,13 +341,11 @@ void cu_binary_gcd_test(void){
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * A->top));
-	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A, buffer));
-	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A, buffer)));
+    
+	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
+	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));
 	//cu_bn_free(A);
-	//cu_bn_free(B);
-    free(buffer);
+	//cu_bn_free(B);	
 	BN_free(A_bn);
 	BN_free(B_bn);
     BN_free(r);
@@ -401,13 +379,11 @@ void cu_fast_binary_euclid_test(void){
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * A->top));
-	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A, buffer));
-	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A, buffer)));
+
+	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
+	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));
 	//cu_bn_free(A);
-	//cu_bn_free(B);
-    free(buffer);
+	//cu_bn_free(B);	
 	BN_free(A_bn);
 	BN_free(B_bn);
     BN_free(r);
@@ -442,13 +418,8 @@ void cu_classic_euclid_test(void){
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * A->top));
-	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A, buffer));
-	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A, buffer)));
-	//cu_bn_free(A);
-	//cu_bn_free(B);
-    free(buffer);
+	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
+	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));	
 	BN_free(A_bn);
 	BN_free(B_bn);
     BN_free(r);
@@ -462,10 +433,7 @@ void bignum2u_bn_test(void){
 	u_bn = cu_bn_new();
 	assert( 0 < BN_dec2bn(&bn, "54635484657846634") );
 	assert( 1 == bignum2u_bn(bn, u_bn) );
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * u_bn->top));
-	assert(!strcmp("C21AAF0F29896A", cu_bn_bn2hex(u_bn, buffer)));
-	free(buffer);
+	assert(!strcmp("C21AAF0F29896A", cu_bn_bn2hex(u_bn)));
 	cu_bn_free(u_bn);
 	BN_free(bn);
 	INFO("Test passed\n");
@@ -478,10 +446,7 @@ void get_u_bn_from_mod_PEM_test(void){
 
 	u_bn = cu_bn_new();
 	assert( 1 == get_u_bn_from_mod_PEM("keys_and_messages/1.pem", u_bn));
-	/*char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * u_bn->top));
-	printf("from PEM file: %s\n", cu_bn_bn2hex(u_bn));
-	free(buffer);*/
+	//printf("from PEM file: %s\n", cu_bn_bn2hex(u_bn));
 	cu_bn_free(u_bn);
 	INFO("Test passed\n");
 }
@@ -493,13 +458,7 @@ void  cu_ubn_copy_test(void){
 	cu_bn_dec2bn(A, "136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703");
 	cu_bn_dec2bn(B, "153687017820663980404875865314501020301179267627899307057160787226214936662085381326053730017478234531591680965138499420169342895677786825703136269636317215868658126726142543242028128679787201513621377420299644359247151157885793577216543689892988935986714087409150506883630386841292060595217129497897100280678");
 	assert( 1 == cu_ubn_copy(A, B));
-    char *buffer_1=NULL;
-    char *buffer_2=NULL;
-    buffer_1 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * A->top));
-    buffer_2 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * B->top));
-	assert(!strcmp(cu_bn_bn2hex(A, buffer_1), cu_bn_bn2hex(B, buffer_2)));
-    free(buffer_1);
-    free(buffer_2);
+	assert(!strcmp(cu_bn_bn2hex(A), cu_bn_bn2hex(B)));
 	cu_bn_free(A);
 	cu_bn_free(B);
 	INFO("Test passed\n");
@@ -512,11 +471,8 @@ void cu_ubn_uadd_test(void){
 	cu_bn_dec2bn(A, "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171");
 	cu_bn_dec2bn(B, "127443773749521740448985064835572871821497258320008925264518297348975527574330581823678917711811966132450236776705531598591537821175218567383336289986769851757919421857153566027389171");
 	assert(1 == cu_ubn_uadd(A, B, B));
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * B->top));
-	assert(!strcmp("3D6D04ECF36DA4AC1E32786F647ECAC3553E24BD9713EB74E14A38FB1B88430C68FDE7EE21C251B44A66D049EE65BC95C7A9D36E503FB0E3B2062D644A99C613EC5D49174489558F03B331E6", cu_bn_bn2hex(B, buffer)));
-	//INFO("B: %s\n", cu_bn_bn2hex(B, buffer));
-    free(buffer);
+	assert(!strcmp("3D6D04ECF36DA4AC1E32786F647ECAC3553E24BD9713EB74E14A38FB1B88430C68FDE7EE21C251B44A66D049EE65BC95C7A9D36E503FB0E3B2062D644A99C613EC5D49174489558F03B331E6", cu_bn_bn2hex(B)));
+	//INFO("B: %s\n", cu_bn_bn2hex(B));
 	cu_bn_free(A);
 	cu_bn_free(B);
 	INFO("Test passed\n");
@@ -571,11 +527,8 @@ void q_algorithm_PM_test(void){
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
-	char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * r->top));
-	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A, buffer));
-	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A,buffer)));	
-    free(buffer);
+	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
+	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));	
 	BN_free(A_bn);
 	BN_free(B_bn);
     BN_free(r);
@@ -609,11 +562,8 @@ void algorithm_PM_test(void){
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
     INFO("[CPU] Time elapsed in ms: %f\n", elapsed);
-	char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * r->top));
-	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A, buffer));
-	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A,buffer)));	
-    free(buffer);
+	//INFO("%s=%s\n", BN_bn2hex(r), cu_bn_bn2hex(A));
+	assert(!strcmp(BN_bn2hex(r), cu_bn_bn2hex(A)));	
 	BN_free(A_bn);
 	BN_free(B_bn);
     BN_free(r);

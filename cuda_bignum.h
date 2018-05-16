@@ -11,7 +11,7 @@
 #include <ctype.h>
 #include "cuda_runtime.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if defined(DEBUG) && DEBUG > 0
  #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
@@ -51,7 +51,7 @@ typedef struct __U_BN__     U_BN;
 /************************32bit version*********************/
 #define cu_bn_zero(a)      (cu_bn_set_word((a),0))
 #define cu_bn_is_odd(a)        (((a)->top > 0) && ((a)->d[0] & 1))
-#define cu_bn_is_zero(a)       ((a)->top == 0)
+#define cu_bn_is_zero(a)       (a->top==1 && a->d[0]==0)
 #define cu_bn_is_initialized() 
 #define CU_BN_BITS2        32
 #define CU_BN_BITS4        16
@@ -63,7 +63,7 @@ typedef struct __U_BN__     U_BN;
 #define CU_BN_DEC_CONV     (1000000000L)
 #define CU_BN_DEC_NUM      9
 #define CU_BN_DEC_FMT1     "%u"
-#define CU_BN_DEC_FMT2		"%09u"
+#define CU_BN_DEC_FMT2      "%09u"
 #define CU_BN_TBIT         (0x80000000L)
 
 #define Lw(t)    (((unsigned)t))
@@ -80,7 +80,7 @@ int cu_bn_mul_word(U_BN *a, unsigned w);
 int cu_bn_add_word(U_BN *a, unsigned w);
 int cu_bn_dec2bn(U_BN * ret, const char *a);
 unsigned  cu_bn_mul_words(unsigned  *rp, const unsigned  *ap, int num, unsigned  w);
-char *cu_bn_bn2hex(const U_BN *a, char *buffer);
+char *cu_bn_bn2hex(const U_BN *a);
 int cu_bn_ucmp(const U_BN *a, const U_BN *b);
 long cu_long_abs(long number);
 int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *c);

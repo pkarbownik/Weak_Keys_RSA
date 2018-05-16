@@ -110,7 +110,7 @@ int cu_bn_set_word(U_BN *a, unsigned w){
     if(NULL == a->d)
         return 0;
 
-    a->d = ((unsigned *)malloc(sizeof(unsigned)));
+    //a->d = ((unsigned *)malloc(sizeof(unsigned)));
     a->d[0] = w;
     a->top = 1;
     return (1);
@@ -166,8 +166,11 @@ int cu_bn_dec2bn(U_BN *ret, const char *a){
         return (0);
     }
 
-    if ('0'==*a)
-        return cu_bn_set_word(ret, 0);
+    if ('0'==a[0]){
+        ret->top=1;
+        ret->d[0]=0;
+        return 1;
+    }
 
     for (i = 0; i <= (INT_MAX/4) && isdigit((unsigned char)a[i]); i++)
         continue;
@@ -202,10 +205,10 @@ int cu_bn_dec2bn(U_BN *ret, const char *a){
 }
 
 /* Must 'OPENSSL_free' the returned data */
-char *cu_bn_bn2hex(const U_BN *a, char *buf){
+char *cu_bn_bn2hex(const U_BN *a){
 
     int i, j, v, z = 0;
-    char *p = NULL;
+    char *buf = NULL, *p = NULL;
     char Hex[] = "0123456789ABCDEF";
 
     if(NULL == a)
@@ -215,8 +218,9 @@ char *cu_bn_bn2hex(const U_BN *a, char *buf){
         return 0;
 
     if (cu_bn_is_zero(a))
-        return 0;
+        return "0";
 
+    buf = (char *)calloc((CU_BN_BYTES * a->top + 1), sizeof(char));
     p=buf;
     for (i = a->top - 1; i >= 0; i--) {
         for (j = CU_BN_BITS2 - 4; j >= 0; j -= 4) {
@@ -276,7 +280,12 @@ int cu_bn_usub(const U_BN *a, const U_BN *b, U_BN *r){
 
     if(NULL == a->d || NULL == b->d || NULL == r->d)
         return 0;
-
+    
+    if(!cu_bn_ucmp(a, b)){  
+        r->top = 1;
+        r->d[0] = 0;
+        return 1;
+    }
 
     max = a->top;
     min = b->top;
@@ -588,32 +597,32 @@ int cu_bn_lshift(U_BN *a, unsigned n){
     unsigned nwb = 0, c = 0;
 
     nw = (n / CU_BN_BITS2);
-    DEBUG_PRINT("nw: %u\n", nw);
+    //DEBUG_PRINT("nw: %u\n", nw);
     lb = (n % CU_BN_BITS2);
-    DEBUG_PRINT("lb: %u\n", lb);
+    //DEBUG_PRINT("lb: %u\n", lb);
     rb = (CU_BN_BITS2 - lb);
-    DEBUG_PRINT("rb: %u\n", rb);
+    //DEBUG_PRINT("rb: %u\n", rb);
 
     l=a->d[a->top-1];
-    if( (l >> rb) > 0 ) nwb = 1;
+    if( ((l << lb)/32) > 0 ) nwb = 1;
 
     if(nw || nwb){
         a->d = (unsigned*)realloc(a->d, (a->top + nw + nwb)*sizeof(unsigned)) ;
         a->d[a->top]=0;
-        memset((a->d+a->top-1), 0, (nw + nwb));
-        memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
+        //memset((a->d+a->top-1), 0, (nw + nwb));
+        //memset(a->d, 0, (nw + nwb)*sizeof(unsigned));
     }
-    DEBUG_PRINT("nwb: %u\n", nwb);
+    //DEBUG_PRINT("nwb: %u\n", nwb);
 
     if (lb == 0 && nw != 0 ){
         for (i = a->top - 1; i >= 0; i--){
             a->d[nw + i] = a->d[i];
-            DEBUG_PRINT("a->d[nw + i]: %u\n", a->d[nw + i]);
+            //DEBUG_PRINT("a->d[nw + i]: %u\n", a->d[nw + i]);
         }
     } else {
         for (i = 0; i < (a->top + nw + nwb); i++) {
             l = a->d[i];
-            DEBUG_PRINT("l = a->d[%d]: %u\n", i, l);
+            //DEBUG_PRINT("l = a->d[%d]: %u\n", i, l);
             a->d[i] = (l << lb) | c;
             c = (l >> rb);
             DEBUG_PRINT("after lshift a->d[%d]: %u\n", i, a->d[i]);
@@ -622,22 +631,13 @@ int cu_bn_lshift(U_BN *a, unsigned n){
 
     }
     a->top += (nw + nwb);
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
-    DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a, buffer));
-    free(buffer);
+    //DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
     return (1);
-
 }
 
 U_BN *cu_binary_gcd(U_BN *a, U_BN *b){
 
     U_BN *t = NULL;
-    unsigned shifts = 0;
-    char *buffer_1=NULL;
-    char *buffer_2=NULL;
-    buffer_1 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
-    buffer_2 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * b->top));
 
     if (cu_bn_ucmp(a, b) < 0) {
         t = a;
@@ -645,24 +645,24 @@ U_BN *cu_binary_gcd(U_BN *a, U_BN *b){
         b = t;
     }
 
+    unsigned shifts = 0;
     while (!cu_bn_is_zero(b)) {
         if (cu_bn_is_odd(a)) {
             if (cu_bn_is_odd(b)) {
-                DEBUG_PRINT("b is odd, a is odd, a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
-                DEBUG_PRINT("b is odd, a is odd, b is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
+                DEBUG_PRINT("b id odd, a is odd, a is equal: %s\n", cu_bn_bn2hex(a));
                 cu_bn_usub(a, b, a);
-                DEBUG_PRINT("b is odd, a is odd, a-b is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
-                cu_bn_rshift1(a);
-                DEBUG_PRINT("b is odd, a is odd, a-b>>1 is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
+                DEBUG_PRINT("b id odd, a is odd, a-b is equal: %s\n", cu_bn_bn2hex(a));
+                cu_bn_rshift1(a); // beacuse subtraction is even
+                DEBUG_PRINT("b id odd, a is odd, a-b>>1 is equal: %s\n", cu_bn_bn2hex(a));
                 if (cu_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {   
-                DEBUG_PRINT("b is even, b is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
+                DEBUG_PRINT("b id even, b is equal: %s\n", cu_bn_bn2hex(b));
                 cu_bn_rshift1(b);
-                DEBUG_PRINT("b is even, b>>1 is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
+                DEBUG_PRINT("b id even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
                 if (cu_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
@@ -671,35 +671,33 @@ U_BN *cu_binary_gcd(U_BN *a, U_BN *b){
             }
         } else {   
             if (cu_bn_is_odd(b)) {
-                DEBUG_PRINT("a is even, b is odd, a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
+                DEBUG_PRINT("a id even, b is odd, a is equal: %s\n", cu_bn_bn2hex(a));
                 cu_bn_rshift1(a);
-                DEBUG_PRINT("a is even, b is odd, a>>1 is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
+                DEBUG_PRINT("a id even, b is odd, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
                 if (cu_bn_ucmp(a, b) < 0) {
                     t = a;
                     a = b;
                     b = t;
                 }
             } else {     
-                DEBUG_PRINT("a is even, b is even, a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
-                DEBUG_PRINT("a is even, b is even, b is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
+                DEBUG_PRINT("a id even, b is even, a is equal: %s\n", cu_bn_bn2hex(a));
+                DEBUG_PRINT("a id even, b is even, b is equal: %s\n", cu_bn_bn2hex(b));
                 cu_bn_rshift1(a);
-                DEBUG_PRINT("a is even, b is even, a>>1 is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
+                DEBUG_PRINT("a id even, b is even, a>>1 is equal: %s\n", cu_bn_bn2hex(a));
                 cu_bn_rshift1(b);
-                DEBUG_PRINT("a is even, b is even, b>>1 is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
+                DEBUG_PRINT("a id even, b is even, b>>1 is equal: %s\n", cu_bn_bn2hex(b));
                 shifts++;
             }
         }
     }
 
     if (shifts) {
-        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
         DEBUG_PRINT("shifts is equal: %u\n", shifts);
         cu_bn_lshift(a, shifts);
-        DEBUG_PRINT("a<<shifts is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
+        DEBUG_PRINT("a<<shifts is equal: %s\n", cu_bn_bn2hex(a));
     }
     //cu_bn_free(t);
-    free(buffer_1);
-    free(buffer_2);
     return (a);
 
 }
@@ -727,50 +725,36 @@ int bignum2u_bn(BIGNUM* bignum, U_BN *u_bn){
 
 U_BN *cu_fast_binary_euclid(U_BN *a, U_BN *b){
     U_BN *t = NULL;
-    char *buffer_1=NULL;
-    char *buffer_2=NULL;
-    buffer_1 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
-    buffer_2 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
     do {
         if (cu_bn_ucmp(a, b) < 0) {
             t = a;
             a = b;
             b = t;
         }
-        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
-        DEBUG_PRINT("b is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
         if(!cu_bn_usub(a, b, a)) break;
-        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
-        DEBUG_PRINT("b is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
+        DEBUG_PRINT("b is equal: %s\n", cu_bn_bn2hex(b));
         while(!(a->d[0]&1)) {
             if(!cu_bn_rshift1(a)) break;
+            DEBUG_PRINT("shift a is equal: %s\n", cu_bn_bn2hex(a));
+            DEBUG_PRINT("shift b is equal: %s\n", cu_bn_bn2hex(b));
         }
     } while (!cu_bn_is_zero(b));
-    free(buffer_1);
-    free(buffer_2);
     return (a);
 }
 
 U_BN *cu_classic_euclid(U_BN *a, U_BN *b){
 
-    char *buffer_1=NULL;
-    char *buffer_2=NULL;    
-    buffer_1 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
-    buffer_2 = (char *)malloc(sizeof(char) * (CU_BN_BYTES * b->top));
     while (cu_bn_ucmp(a, b) != 0) {
         if (cu_bn_ucmp(a, b) > 0) {
-            if(!cu_bn_usub(a, b, a)) break;
+            cu_bn_usub(a, b, a); 
         }
         else {
-            if(!cu_bn_usub(b, a, b)) break;
+            cu_bn_usub(b, a, b);
         }
-        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
-        DEBUG_PRINT("b is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
     }
-    DEBUG_PRINT("end a is equal: %s\n", cu_bn_bn2hex(a, buffer_1));
-    DEBUG_PRINT("end b is equal: %s\n", cu_bn_bn2hex(b, buffer_2));
-    free(buffer_1);
-    free(buffer_2);
+
     return (a);
 
 }
@@ -862,11 +846,9 @@ int cu_ubn_uadd(const U_BN *a, const U_BN *b, U_BN *r)
 
 U_BN *q_algorithm_PM(U_BN *a, U_BN *b){
     int q=0;
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * b->top));
     U_BN *t = NULL;
     while (!cu_bn_is_zero(b)) {
-        DEBUG_PRINT("q: %d b: %s\n", q, cu_bn_bn2hex(b, buffer));
+        DEBUG_PRINT("q: %d b: %s\n", q, cu_bn_bn2hex(b));
         while(!cu_bn_is_odd(b)){
             cu_bn_rshift1(b);
             q++;
@@ -885,7 +867,6 @@ U_BN *q_algorithm_PM(U_BN *a, U_BN *b){
             cu_bn_rshift1(b);
         }
     }
-    free(buffer);
     return (a);
 
 }
@@ -893,10 +874,8 @@ U_BN *q_algorithm_PM(U_BN *a, U_BN *b){
 U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize){
     int beta=keysize, alfa=keysize, tmp;
     U_BN *t = NULL;
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * b->top));
     while (!cu_bn_is_zero(b)) {
-        DEBUG_PRINT("b: %s\n", cu_bn_bn2hex(b, buffer));
+        //DEBUG_PRINT("b: %s\n", cu_bn_bn2hex(b));
         while(!cu_bn_is_odd(b)){
             cu_bn_rshift1(b);
             beta--;
@@ -918,7 +897,6 @@ U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize){
             cu_bn_rshift1(b);
         }
     }
-    free(buffer);
     return (a);
 
 }
@@ -926,8 +904,6 @@ U_BN *algorithm_PM(U_BN *a, U_BN *b, unsigned keysize){
 U_BN *cu_approximate_euclid(U_BN *a, U_BN *b, unsigned keysize){
     int beta=keysize, alfa=keysize, tmp;
     U_BN *t = NULL;
-    char *buffer=NULL;
-    buffer = (char *)malloc(sizeof(char) * (CU_BN_BYTES * a->top));
     do{
         if(beta==0){
             if(!(alfa&1)) alfa --;
@@ -946,9 +922,10 @@ U_BN *cu_approximate_euclid(U_BN *a, U_BN *b, unsigned keysize){
         else {
             cu_bn_usub(b, a, b);
         }
-        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a, buffer));
+        DEBUG_PRINT("a is equal: %s\n", cu_bn_bn2hex(a));
     }
-    free(buffer);
+
     return (a);
 
 }
+
