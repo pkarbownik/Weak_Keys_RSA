@@ -10,6 +10,24 @@
                                   __VA_ARGS__)
 #endif*/
 
+typedef enum {
+    EUCLIDEAN=0,
+    BINARY_EUCLIDEAN,
+    FAST_BINARY_EUCLIDEAN,
+    UNKNOWN
+} algorithms;
+
+algorithms set_enum_algorithm(char * algorithm){
+    if(!strcmp( "euclid", algorithm)){
+        return EUCLIDEAN;
+    } else if(!strcmp( "binary", algorithm)) {
+        return BINARY_EUCLIDEAN;
+    } else if(!strcmp( "fast", algorithm)) {
+        return FAST_BINARY_EUCLIDEAN;
+    } else {
+        return UNKNOWN;
+    }
+}
 
 int main(int argc, char* argv[]){
 	
@@ -19,8 +37,9 @@ int main(int argc, char* argv[]){
     unsigned number_of_comutations;
     char *keys_directory;
     int counter;
+    algorithms gcd_kind;
 
-    if(argc==5) {
+    if(argc==6) {
         for(counter=0;counter<argc;counter++){
             switch(counter){
                 case 1:
@@ -39,12 +58,16 @@ int main(int argc, char* argv[]){
                     printf("\nname of keys directory argv[%d]: %s\n",counter,argv[counter]);
                     keys_directory=argv[counter];
                     break;
+                case 5:
+                    printf("\nkind of algorithm argv[%d]: %s\n",counter,argv[counter]);
+                    gcd_kind = set_enum_algorithm(argv[counter]);
+                    break;
                 default:
                     break;
             }
         }
     } else {
-        printf("\nFind weak keys\nUsage:\n ./GCD_RSA number_of_keys key_size threads_per_block keys_directory_name\n");
+        printf("\nFind weak keys\n\rUsage:\n\r ./GCD_RSA number_of_keys key_size threads_per_block directory_name kind_of_algorithm\n\rAlgorithms:\n\r\t-\"euclid\"\n\r\t-\"binary\"\n\r\t-\"fast\"\n\r");
         return 0;
     }
 
@@ -62,7 +85,7 @@ int main(int argc, char* argv[]){
     cudaError_t cudaStatus;
 
     //unit_test();
-    //CPU_computation(number_of_keys, key_size, keys_directory);
+    //OpenSSL_GCD(number_of_keys, key_size, keys_directory);
 
 
     A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
@@ -134,20 +157,49 @@ int main(int argc, char* argv[]){
         }
     }
 
+
     int sum=0;
     clock_t start = clock();
-    for(i=0, k=0; i<number_of_keys; i++){
-        for(j=(i+1); j<number_of_keys; j++, k++){
-            if( strcmp( "1", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])))){
-                printf("[CPU] Fast Weak key: %s\n", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])));
-                sum+=1;
+    switch(gcd_kind){
+        case EUCLIDEAN:
+            for(i=0, k=0; i<number_of_keys; i++){
+                for(j=(i+1); j<number_of_keys; j++, k++){
+                    if( strcmp( "1", cu_bn_bn2hex(cu_dev_classic_euclid(&A[k], &B[k])))){
+                        printf("[CPU] Euclidean Weak key: %s\n", cu_bn_bn2hex(cu_dev_classic_euclid(&A[k], &B[k])));
+                        sum+=1;
+                    }
+                }
             }
-        }
+            break;
+        case BINARY_EUCLIDEAN:
+            for(i=0, k=0; i<number_of_keys; i++){
+                for(j=(i+1); j<number_of_keys; j++, k++){
+                    if( strcmp( "1", cu_bn_bn2hex(cu_dev_binary_gcd(&A[k], &B[k])))){
+                        printf("[CPU] Binary Weak key: %s\n", cu_bn_bn2hex(cu_dev_binary_gcd(&A[k], &B[k])));
+                        sum+=1;
+                    }
+                }
+            }
+            break;
+        case FAST_BINARY_EUCLIDEAN:
+            for(i=0, k=0; i<number_of_keys; i++){
+                for(j=(i+1); j<number_of_keys; j++, k++){
+                    if( strcmp( "1", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])))){
+                        printf("[CPU] Fast Weak key: %s\n", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])));
+                        sum+=1;
+                    }
+                }
+            }
+            break;
+        default:
+            printf("[CPU] Unknown GCD algorithm");
+            break;
     }
     clock_t stop = clock();
     double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
-    printf("[CPU] Fast Binary Time elapsed in ms: %f\n", elapsed);
+    printf("[CPU] Time elapsed in ms: %f\n", elapsed);
     printf("[CPU] Weak keys: %d\n", sum);
+
 
     cudaDeviceReset();
     cudaStatus = cudaMalloc((void**)&device_U_BN_A, number_of_comutations*sizeof(U_BN));    
@@ -172,22 +224,33 @@ int main(int argc, char* argv[]){
         cudaMemcpy(&device_U_BN_C[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
     }
 
-    //cudaPrintfInit();
-
     float time;
     cudaEvent_t start_cu, stop_cu;
     cudaEventCreate(&start_cu);
     cudaEventCreate(&stop_cu);
     cudaEventRecord(start_cu, 0);
-
-    fastBinaryKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, number_of_comutations);
+    switch(gcd_kind){
+        case EUCLIDEAN:
+            printf("[GPU] Euclidean algorithm\n");
+            orgEuclideanKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, number_of_comutations);
+            break;
+        case BINARY_EUCLIDEAN:
+            printf("[GPU] Binary algorithm\n");
+            binEuclideanKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, number_of_comutations);
+            break;
+        case FAST_BINARY_EUCLIDEAN:
+            printf("[GPU] Fast Binary algorithm\n");
+            fastBinaryKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, number_of_comutations);
+            break;
+        default:
+            printf("[GPU] Unknown GCD algorithm\n");
+            break;
+    }
 
     cudaEventRecord(stop_cu, 0);
     cudaEventSynchronize(stop_cu);
     cudaEventElapsedTime(&time, start_cu, stop_cu);
     printf("[GPU] Time elapsed in ms %fms\n", time);
-    //cudaPrintfDisplay(stdout, true);
-    //cudaPrintfEnd();
 
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
@@ -220,22 +283,22 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    //cudaFree(out);
-    //free(array);
-    //cudaFree(device_U_BN_A);
-    //cudaFree(device_U_BN_B);
-    //cudaFree(device_U_BN_C);
+    sum=0;
+    for (k = 0; k < number_of_comutations; k++){
+        if( strcmp( "1", cu_bn_bn2hex(&C[k]))){
+            sum += 1;
+        }
+    }
+    printf("[GPU] Weak keys: %d\n", sum);
 
-
-    /*for(i=0; i<number_of_comutations; i++){
-        free(A[i].d);
-        free(B[i].d);
-        free(C[i].d);
-    }*/
-
+    cudaFree(out);
+    free(array);
+    cudaFree(device_U_BN_A);
+    cudaFree(device_U_BN_B);
+    cudaFree(device_U_BN_C);
     free(A);
     free(B);
-    //free(C);
+    free(C);
     free(cu_PEMs);
     return (0);
 }

@@ -26,7 +26,7 @@ __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b);
 
 __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b);
 
-void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_directory);
+void OpenSSL_GCD(unsigned number_of_keys, unsigned key_size, char *keys_directory);
 
 __global__ void orgEuclideanKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n);
 

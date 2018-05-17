@@ -291,7 +291,7 @@ __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
 
 
 
-void CPU_computation(unsigned number_of_keys, unsigned key_size, char *keys_directory){
+void OpenSSL_GCD(unsigned number_of_keys, unsigned key_size, char *keys_directory){
 
     U_BN tmp;
     unsigned sum=0;
