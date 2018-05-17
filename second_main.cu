@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
 
     U_BN tmp;
     int L = ((key_size+31) / (8*sizeof(unsigned)));
-    unsigned i, j;
+    unsigned i, j, sum = 0;
     unsigned k = 0, l=0;
     U_BN   *A, *B, *C;
     U_BN   *device_U_BN_A, *device_U_BN_B, *device_U_BN_C;
@@ -61,8 +61,8 @@ int main(int argc, char* argv[]){
     char *tmp_path;
     cudaError_t cudaStatus;
 
-    //unit_test();
-    //CPU_computation(number_of_keys, key_size, keys_directory);
+    unit_test();
+    CPU_computation(number_of_keys, key_size, keys_directory);
 
 
     A    = (U_BN*)malloc(number_of_comutations*sizeof(U_BN));
@@ -134,20 +134,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    int sum=0;
-    clock_t start = clock();
-    for(i=0, k=0; i<number_of_keys; i++){
-        for(j=(i+1); j<number_of_keys; j++, k++){
-            if( strcmp( "1", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])))){
-                printf("[CPU] Fast Weak key: %s\n", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])));
-                sum+=1;
-            }
-        }
-    }
-    clock_t stop = clock();
-    double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
-    printf("[CPU] Fast Binary Time elapsed in ms: %f\n", elapsed);
-    printf("[CPU] Weak keys: %d\n", sum);
+
 
     cudaDeviceReset();
     cudaStatus = cudaMalloc((void**)&device_U_BN_A, number_of_comutations*sizeof(U_BN));    
@@ -172,22 +159,22 @@ int main(int argc, char* argv[]){
         cudaMemcpy(&device_U_BN_C[i].d, &out, sizeof(void*), cudaMemcpyHostToDevice);
     }
 
-    //cudaPrintfInit();
+    cudaPrintfInit();
 
     float time;
-    cudaEvent_t start_cu, stop_cu;
-    cudaEventCreate(&start_cu);
-    cudaEventCreate(&stop_cu);
-    cudaEventRecord(start_cu, 0);
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
 
-    fastBinaryKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, number_of_comutations);
+    testKernel<<<((number_of_comutations + thread_per_block -1)/thread_per_block), thread_per_block>>>(device_U_BN_A, device_U_BN_B, device_U_BN_C, number_of_comutations);
 
-    cudaEventRecord(stop_cu, 0);
-    cudaEventSynchronize(stop_cu);
-    cudaEventElapsedTime(&time, start_cu, stop_cu);
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time, start, stop);
     printf("[GPU] Time elapsed in ms %fms\n", time);
-    //cudaPrintfDisplay(stdout, true);
-    //cudaPrintfEnd();
+    cudaPrintfDisplay(stdout, true);
+    cudaPrintfEnd();
 
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
