@@ -34,4 +34,10 @@ __global__ void binEuclideanKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n);
 
 __global__ void fastBinaryKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n);
 
+__global__ void orgEuclideanKernel_with_selection(U_BN *A, U_BN *B, U_BN *R, unsigned number_of_comutations, unsigned number_of_keys);
+
+__global__ void binEuclideanKernel_with_selection(U_BN *A, U_BN *B, U_BN *R, unsigned number_of_comutations, unsigned number_of_keys);
+
+__global__ void fastBinaryKernel_with_selection(U_BN *A, U_BN *B, U_BN *R, unsigned number_of_comutations, unsigned number_of_keys);
+
 #endif // #ifndef _DEVICE_CUDA_BIGNUM_H_

@@ -259,7 +259,7 @@ __host__ __device__ U_BN *cu_dev_binary_gcd(U_BN *a, U_BN *b){
 
 
 __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
-    U_BN *t = NULL;
+    U_BN *t;
     do {
         if (cu_dev_bn_ucmp(a, b) < 0) {
             t = a;
@@ -271,6 +271,7 @@ __host__ __device__ U_BN *cu_dev_fast_binary_euclid(U_BN *a, U_BN *b){
             if(!cu_dev_bn_rshift1(a)) break;
         }
     } while (!cu_bn_is_zero(b));
+
     return (a);
 }
 
@@ -284,7 +285,6 @@ __host__ __device__ U_BN *cu_dev_classic_euclid(U_BN *a, U_BN *b){
             cu_dev_bn_usub(b, a, b);
         }
     }
-
     return (a);
 
 }
@@ -376,5 +376,55 @@ __global__ void fastBinaryKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
     if(i<n){
         TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
         C[i] = *TMP;
+    }
+}
+
+__global__ void orgEuclideanKernel_with_selection(U_BN *A, U_BN *B, U_BN *R, unsigned number_of_comutations, unsigned number_of_keys) {
+    int k= blockIdx.x * blockDim.x + threadIdx.x;
+    int i= (k / number_of_keys); 
+    int j= (1 + (k % number_of_keys + i) % number_of_keys);
+    U_BN *TMP=NULL;
+
+    if(k<number_of_comutations){
+        TMP = cu_dev_classic_euclid(&A[i], &B[j]);
+        R[i] = *TMP;
+    }
+}
+
+__global__ void binEuclideanKernel_with_selection(U_BN *A, U_BN *B, U_BN *R, unsigned number_of_comutations, unsigned number_of_keys) {
+    int k= blockIdx.x * blockDim.x + threadIdx.x;
+    int i= (k / number_of_keys); 
+    int j= (1 + (k % number_of_keys + i) % number_of_keys);
+    U_BN *TMP=NULL;
+
+    if(k<number_of_comutations){
+        TMP = cu_dev_binary_gcd(&A[i], &B[j]);
+        R[i] = *TMP;
+    }
+}
+
+__global__ void fastBinaryKernel_with_selection(U_BN *A, U_BN *B, U_BN *R, unsigned number_of_comutations, unsigned number_of_keys) {
+    int k= blockIdx.x * blockDim.x + threadIdx.x;
+    int i= (k / number_of_keys); 
+    int j= (1 + (k % number_of_keys + i) % number_of_keys);
+    //int l;
+    U_BN *TMP=NULL;
+    //U_BN *tmp_A = NULL;
+    //U_BN *tmp_B = NULL;
+    //tmp_A = (U_BN*)malloc(sizeof(U_BN));
+    //tmp_B = (U_BN*)malloc(sizeof(U_BN));
+
+    //tmp_A->d = (unsigned*)malloc(32*sizeof(unsigned));
+    //tmp_B->d = (unsigned*)malloc(32*sizeof(unsigned));
+    //tmp_A->top = KEYS[i].top;
+    //tmp_B->top = KEYS[j].top;
+    //for(l=0; l<32; l++){
+    //    tmp_A->d[l] = KEYS[i].d[l];
+    //    tmp_B->d[l] = KEYS[j].d[l];
+    //}
+
+    if(k<number_of_comutations){
+        TMP = cu_dev_fast_binary_euclid(&A[i], &B[j]);
+        R[i] = *TMP;
     }
 }
