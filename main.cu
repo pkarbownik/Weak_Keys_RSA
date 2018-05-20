@@ -98,15 +98,12 @@ int main(int argc, char* argv[]){
         U_BN a;
         U_BN b;
         U_BN c;
-        U_BN d;
         a.d = (unsigned*)malloc(L*sizeof(unsigned));
         b.d = (unsigned*)malloc(L*sizeof(unsigned));
         c.d = (unsigned*)malloc(L*sizeof(unsigned));
-        d.d = (unsigned*)malloc(L*sizeof(unsigned));
         a.top =   L;
         b.top =   L;
         c.top =   L;
-        d.top =   L;
 
         for(j=0; j<L; j++)
             a.d[j]=0;
@@ -117,13 +114,9 @@ int main(int argc, char* argv[]){
         for(j=0; j<L; j++)
             c.d[j]=0;
 
-        for(j=0; j<L; j++)
-            c.d[j]=0;
-
         A[i] = a;
         B[i] = b;
         C[i] = c;
-        C[i] = d;
 
     }
 

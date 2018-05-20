@@ -86,7 +86,7 @@ LFLAGS = -Lopenssl_built/lib
 
 LIBS = -lcrypto -lssl
 
-MAIN_FILE = main_kernel_sel
+MAIN_FILE = main
 
 SRCS =  $(MAIN_FILE).cu cuda_bignum.cu test.cu files_manager.cu device_cuda_bignum.cu
 
