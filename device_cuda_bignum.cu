@@ -183,7 +183,7 @@ __host__ __device__ int cu_dev_bn_lshift(U_BN *a, unsigned n){
     if( ((l << lb)/32) > 0 ) nwb = 1;
 
     if(nw || nwb){
-        a->d = (unsigned*)realloc(a->d, (a->top + nw + nwb)*sizeof(unsigned)) ;
+        //a->d = (unsigned*)realloc(a->d, (a->top + nw + nwb)*sizeof(unsigned)) ;
         a->d[a->top]=0;
     }
 
@@ -370,12 +370,47 @@ __global__ void binEuclideanKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
 }
 
 __global__ void fastBinaryKernel(U_BN *A, U_BN *B, U_BN *C, unsigned n) {
+    int l;
     int i= blockIdx.x * blockDim.x + threadIdx.x;
-    U_BN *TMP=NULL;
 
     if(i<n){
+        U_BN *TMP=NULL;
+        /*U_BN *tmp_A = NULL;
+        U_BN *tmp_B = NULL;
+        U_BN *tmp_C = NULL;
+        tmp_A = (U_BN*)malloc(sizeof(U_BN));
+        tmp_B = (U_BN*)malloc(sizeof(U_BN));
+        tmp_C = (U_BN*)malloc(sizeof(U_BN));
+        tmp_A->d = (unsigned*)malloc(32*sizeof(unsigned));
+        tmp_B->d = (unsigned*)malloc(32*sizeof(unsigned));
+        tmp_C->d = (unsigned*)malloc(32*sizeof(unsigned));
+        tmp_A->top = A[i].top;
+        tmp_B->top = B[i].top;
+        //tmp_C->top = C[i].top;
+        for(l=0; l<32; l++){
+            tmp_A->d[l] = 0;
+            tmp_B->d[l] = 0;
+            tmp_C->d[l] = 0;
+            tmp_A->d[l] = A[i].d[l];
+            tmp_B->d[l] = B[i].d[l];
+            //tmp_C->d[l] = C[i].d[l];
+        }
+        //printf("testKernel entrance by the global threadIdx=%d %u \n",i, A[i].d[3]);
+        //printf("testKernel =%d %u \n",i, tmp_A->d[3]);
+        TMP = cu_dev_fast_binary_euclid(tmp_A, tmp_B);
+
+        C[i].top = TMP->top;
+        for(l=0; l<32; l++){
+            C[i].d[l] = TMP->d[l];
+        }*/
+
         TMP = cu_dev_fast_binary_euclid(&A[i], &B[i]);
         C[i] = *TMP;
+
+        //if(tmp_C->d[0]!=1)
+            //printf("testKernel entrance by the global threadIdx= %d \n", i);
+        //C[i] = *tmp_C;
+        //printf("testKernel CC =%d %u \n",i, tmp_C->d[0]);
     }
 }
 

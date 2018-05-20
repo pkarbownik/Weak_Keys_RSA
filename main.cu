@@ -174,48 +174,6 @@ int main(int argc, char* argv[]){
 
 
     int sum=0;
-    if(cpu_gpu==CPU || cpu_gpu==BOTH){
-        clock_t start = clock();
-        switch(gcd_kind){
-            case EUCLIDEAN:
-                for(i=0, k=0; i<number_of_keys; i++){
-                    for(j=(i+1); j<number_of_keys; j++, k++){
-                        if( strcmp( "1", cu_bn_bn2hex(cu_dev_classic_euclid(&A[k], &B[k])))){
-                            printf("[CPU] Euclidean Weak key: %s\n", cu_bn_bn2hex(cu_dev_classic_euclid(&A[k], &B[k])));
-                            sum+=1;
-                        }
-                    }
-                }
-                break;
-            case BINARY_EUCLIDEAN:
-                for(i=0, k=0; i<number_of_keys; i++){
-                    for(j=(i+1); j<number_of_keys; j++, k++){
-                        if( strcmp( "1", cu_bn_bn2hex(cu_dev_binary_gcd(&A[k], &B[k])))){
-                            printf("[CPU] Binary Weak key: %s\n", cu_bn_bn2hex(cu_dev_binary_gcd(&A[k], &B[k])));
-                            sum+=1;
-                        }
-                    }
-                }
-                break;
-            case FAST_BINARY_EUCLIDEAN:
-                for(i=0, k=0; i<number_of_keys; i++){
-                    for(j=(i+1); j<number_of_keys; j++, k++){
-                        if( strcmp( "1", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])))){
-                            printf("[CPU] Fast Weak key: %s\n", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])));
-                            sum+=1;
-                        }
-                    }
-                }
-                break;
-            default:
-                printf("[CPU] Unknown GCD algorithm");
-                break;
-        }
-        clock_t stop = clock();
-        double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
-        printf("[CPU] Time elapsed in ms: %f\n", elapsed);
-        printf("[CPU] Weak keys: %d\n", sum);
-    } 
 
     if(cpu_gpu==GPU || cpu_gpu==BOTH) {
 
@@ -280,18 +238,21 @@ int main(int argc, char* argv[]){
         cudaStatus = cudaMemcpy(B, device_U_BN_B, number_of_comutations*sizeof(U_BN), cudaMemcpyDeviceToHost);
         cudaStatus = cudaMemcpy(C, device_U_BN_C, number_of_comutations*sizeof(U_BN), cudaMemcpyDeviceToHost);
 
-        unsigned *array = (unsigned*)malloc(L*sizeof(unsigned));
+
+        unsigned *array_A;
+        unsigned *array_B;
+        unsigned *array_C;
 
         for(i = 0; i < number_of_comutations; ++i) {
-            array = (unsigned*)malloc(L*sizeof(unsigned));
-            cudaMemcpy(array, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
-            A[i].d = array;
-
-            cudaMemcpy(array, B[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
-            B[i].d = array;
-
-            cudaMemcpy(array, C[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
-            C[i].d = array;
+            array_A = (unsigned*)malloc(L*sizeof(unsigned));
+            cudaMemcpy(array_A, A[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
+            A[i].d = array_A;
+            array_B = (unsigned*)malloc(L*sizeof(unsigned));
+            cudaMemcpy(array_B, B[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
+            B[i].d = array_B;
+            array_C = (unsigned*)malloc(L*sizeof(unsigned));
+            cudaMemcpy(array_C, C[i].d, L*sizeof(unsigned), cudaMemcpyDeviceToHost);
+            C[i].d = array_C;
 
         }
 
@@ -301,20 +262,73 @@ int main(int argc, char* argv[]){
             return 1;
         }
 
+
+        //cudaFree(out);
+        //free(array_A);
+        //free(array_B);
+        //free(array_C);
+        //cudaFree(device_U_BN_A);
+        //cudaFree(device_U_BN_B);
+        //cudaFree(device_U_BN_C);
+
         sum=0;
         for (k = 0; k < number_of_comutations; k++){
             if( strcmp( "1", cu_bn_bn2hex(&C[k]))){
+                //printf("[GPU] Fast Weak key: %s\n", cu_bn_bn2hex(&A[k]));
+                //printf("[GPU] Fast Weak key: %s\n", cu_bn_bn2hex(&B[k]));
+                //printf("[GPU] Fast Weak key: %s\n", cu_bn_bn2hex(&C[k]));
                 sum += 1;
             }
         }
         printf("[GPU] Weak keys: %d\n", sum);
-
-        cudaFree(out);
-        free(array);
-        cudaFree(device_U_BN_A);
-        cudaFree(device_U_BN_B);
-        cudaFree(device_U_BN_C);
     }
+
+    sum=0;
+
+    if(cpu_gpu==CPU || cpu_gpu==BOTH){
+        clock_t start = clock();
+        switch(gcd_kind){
+            case EUCLIDEAN:
+                for(i=0, k=0; i<number_of_keys; i++){
+                    for(j=(i+1); j<number_of_keys; j++, k++){
+                        if( strcmp( "1", cu_bn_bn2hex(cu_dev_classic_euclid(&A[k], &B[k])))){
+                            //printf("[CPU] Euclidean Weak key: %s\n", cu_bn_bn2hex(cu_dev_classic_euclid(&A[k], &B[k])));
+                            sum+=1;
+                        }
+                    }
+                }
+                break;
+            case BINARY_EUCLIDEAN:
+                for(i=0, k=0; i<number_of_keys; i++){
+                    for(j=(i+1); j<number_of_keys; j++, k++){
+                        if( strcmp( "1", cu_bn_bn2hex(cu_dev_binary_gcd(&A[k], &B[k])))){
+                            //printf("[CPU] Binary Weak key: %s\n", cu_bn_bn2hex(cu_dev_binary_gcd(&A[k], &B[k])));
+                            sum+=1;
+                        }
+                    }
+                }
+                break;
+            case FAST_BINARY_EUCLIDEAN:
+                for(i=0, k=0; i<number_of_keys; i++){
+                    for(j=(i+1); j<number_of_keys; j++, k++){
+                        if( strcmp( "1", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])))){
+                            //printf("[CPU] Fast Weak key: %s\n", cu_bn_bn2hex(cu_dev_fast_binary_euclid(&A[k], &B[k])));
+                            sum+=1;
+                        }
+                    }
+                }
+                break;
+            default:
+                printf("[CPU] Unknown GCD algorithm");
+                break;
+        }
+        clock_t stop = clock();
+        double elapsed = (double)(stop - start) * 1000.0 / CLOCKS_PER_SEC;
+        printf("[CPU] Time elapsed in ms: %f\n", elapsed);
+        printf("[CPU] Weak keys: %d\n", sum);
+    } 
+
+
     free(A);
     free(B);
     free(C);
